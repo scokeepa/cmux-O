@@ -233,10 +233,12 @@ fi
 
   명령어:
   ─────────────────────────────────────────────────────
-  /cmux-config    AI 프로파일 관리
-  /cmux-help      도움말
-  /cmux-pause     긴급 정지/재개
-  /cmux-uninstall 제거 + 롤백
+  /cmux-config         AI 프로파일 관리
+  /cmux-stop           오케스트레이션 종료
+  /cmux-watcher-mute   와쳐 알림 토글
+  /cmux-pause          긴급 정지/재개
+  /cmux-help           도움말
+  /cmux-uninstall      제거 + 롤백
 
 ═══════════════════════════════════════════════════════
 ```
