@@ -95,6 +95,9 @@ function_detect_surfaces() {
       variable_current_workspace="$variable_workspace_ref"
     fi
 
+    # 브라우저 surface 스킵 (read-screen 불가)
+    case "$variable_line" in *"[browser]"*) continue ;; esac
+
     variable_surface_ref=$(printf '%s\n' "$variable_line" | sed -n 's/.*\(surface:[0-9][0-9]*\).*/\1/p')
     [ -n "$variable_surface_ref" ] || continue
     [ -n "$variable_current_workspace" ] || continue
