@@ -63,6 +63,7 @@ VISION_DIFF_PREV = Path("/tmp/cmux-vdiff-prev.json")  # {surface_id: cleaned_tex
 PIPE_PANE_INITIALIZED = Path("/tmp/cmux-pipe-pane-initialized.flag")
 SURFACE_MAP_FILE = Path("/tmp/cmux-surface-map.json")
 PAUSE_FLAG = Path("/tmp/cmux-paused.flag")
+WATCHER_MUTE_FLAG = Path("/tmp/cmux-watcher-muted.flag")
 
 # Thresholds
 IDLE_ALERT_SECONDS = 90       # Alert if IDLE for > 90s
@@ -1150,7 +1151,10 @@ def main() -> None:
         """Send alert summary to Main surface via cmux send + enter.
 
         항상 호출 — action_needed 여부 무관하게 상태 리포트 전송.
+        WATCHER_MUTE_FLAG 존재 시 알림 전송 스킵 (스캔은 계속).
         """
+        if WATCHER_MUTE_FLAG.exists():
+            return
         if not ROLES_FILE.exists():
             return
         try:
@@ -1325,14 +1329,18 @@ def main() -> None:
             do_heartbeat()
 
             # Sidebar
+            is_muted = WATCHER_MUTE_FLAG.exists()
             status_text = (
+                f"{'🔇 ' if is_muted else ''}"
                 f"W:{summary.get('working',0)} "
                 f"I:{summary.get('idle',0)} "
                 f"D:{summary.get('done',0)} "
                 f"E:{summary.get('error',0)}"
             )
             color = "#ff0000" if summary.get("error", 0) > 0 else "#00ff00"
-            if main_state == "IDLE" and not has_working:
+            if is_muted:
+                color = "#ffaa00"
+            elif main_state == "IDLE" and not has_working:
                 color = "#888888"
             run_cmd(["cmux", "set-status", "watcher", status_text,
                      "--icon", "eye", "--color", color], timeout=3)
