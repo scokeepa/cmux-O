@@ -160,19 +160,19 @@ if [ -z "$EXISTING_JARVIS" ]; then
     # 탭 이름 변경
     cmux rename-tab --surface $JARVIS_SID "자비스(JARVIS)"
 
-    # Claude Code 시작
-    cmux send --surface $JARVIS_SID "claude"
+    # Claude Code 시작 (JARVIS는 모니터링 전용이므로 권한 프롬프트 스킵)
+    cmux send --surface $JARVIS_SID "claude --dangerously-skip-permissions"
 
     for i in $(seq 1 10); do
         sleep 3
         SCREEN=$(cmux read-screen --surface $JARVIS_SID --lines 5 2>/dev/null)
-        if echo "$SCREEN" | grep -qE "❯|shortcuts|trust"; then break; fi
+        if echo "$SCREEN" | grep -qE "❯|shortcuts|bypass|trust"; then break; fi
     done
     cmux send-key --surface $JARVIS_SID Enter
     sleep 2
 
     # JARVIS 시작 명령 전달
-    cmux send --surface $JARVIS_SID "당신은 JARVIS 시스템 관리자입니다. eagle-status와 watcher-alerts를 확인하고 오케스트레이션 상태를 모니터링하세요."
+    cmux send --surface $JARVIS_SID "당신은 JARVIS 시스템 관리자입니다. cmux-jarvis 스킬을 사용하여 오케스트레이션 상태를 모니터링하세요. /tmp/cmux-roles.json과 /tmp/cmux-eagle-status.json을 주기적으로 확인하고, 문제 발견 시 사장(Main) pane에 알려주세요."
     cmux send-key --surface $JARVIS_SID Enter
 
     # roles.json 등록
