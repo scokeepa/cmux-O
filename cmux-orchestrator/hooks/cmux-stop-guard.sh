@@ -22,20 +22,43 @@ scan_file = '/tmp/cmux-surface-scan.json'
 eagle_file = '/tmp/cmux-eagle-status.json'
 enter_signal = '/tmp/cmux-watcher-enter-signal.json'
 
-# --- 1. WORKING surface 차단 ---
+# --- 1. WORKING surface 차단 (오케스트레이션이 디스패치한 surface만) ---
 working = []
-if os.path.exists(scan_file) and (time.time() - os.path.getmtime(scan_file)) < 300:
+
+# 오케스트레이션 관리 대상 surface 목록 (dispatched + team members, 자기자신/watcher/jarvis 제외)
+managed_surfaces = set()
+roles_file = '/tmp/cmux-roles.json'
+excluded_roles = {'main', 'watcher', 'jarvis'}
+if os.path.exists(roles_file):
     try:
-        d = json.load(open(scan_file))
-        working = [s for s, i in d.get('surfaces', {}).items() if i.get('status') == 'WORKING']
+        roles = json.load(open(roles_file))
+        for role_name, role_info in roles.items():
+            if role_name in excluded_roles:
+                continue
+            sf = role_info.get('surface', '')
+            if sf:
+                sf_id = sf.replace('surface:', '')
+                managed_surfaces.add(sf_id)
+        # dispatched 목록이 있으면 추가
+        for sf in roles.get('dispatched', []):
+            sf_id = str(sf).replace('surface:', '')
+            managed_surfaces.add(sf_id)
     except: pass
 
-if not working and os.path.exists(eagle_file):
-    try:
-        d = json.load(open(eagle_file))
-        if d.get('stats', {}).get('working', 0) > 0:
-            working = ['eagle-detected']
-    except: pass
+if managed_surfaces:
+    if os.path.exists(scan_file) and (time.time() - os.path.getmtime(scan_file)) < 300:
+        try:
+            d = json.load(open(scan_file))
+            working = [s for s, i in d.get('surfaces', {}).items()
+                       if i.get('status') == 'WORKING' and s in managed_surfaces]
+        except: pass
+
+    if not working and os.path.exists(eagle_file):
+        try:
+            d = json.load(open(eagle_file))
+            working = [s for s, i in d.get('surfaces', {}).items()
+                       if i.get('status') == 'WORKING' and s in managed_surfaces]
+        except: pass
 
 # --- 2. 와쳐 엔터 신호 처리 (Stop = AI 응답 완료 = 안전하게 엔터 가능) ---
 if os.path.exists(enter_signal):
