@@ -7,6 +7,7 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/workspace-resolver.sh"
+source "${SCRIPT_DIR}/cmux_compat.sh" 2>/dev/null || true
 
 SURFACES="${1:-2 3 4 5 6 10 11 7 8 13 14 15 16 19 20}"
 ANE_TOOL="$HOME/Ai/System/11_Modules/ane-cli/ane_tool"
@@ -22,15 +23,21 @@ RL_POOL="${RL_SURFACES:-}"
 declare PREV_STATUS_MAP=""
 declare PREV_EPOCH_TS=0
 if [ -f "$PREV_FILE" ]; then
-    PREV_EPOCH_TS=$(grep -oP '"timestamp":"\K[^"]+' "$PREV_FILE" 2>/dev/null | head -1)
-    PREV_STATUS_MAP=$(grep -oP '"(\d+)":\{"status":"[^"]+' "$PREV_FILE" 2>/dev/null | sed 's/"/\n/g' | grep -E "^[0-9]+$" | while read sn; do
-        status=$(grep -oP "\"${sn}\":\{\"status\":\"\K[^\"]+" "$PREV_FILE" 2>/dev/null)
-        echo "${sn}:${status}"
-    done | tr '\n' ' ')
+    PREV_EPOCH_TS=$(compat_json_get "$PREV_FILE" timestamp 2>/dev/null)
+    PREV_STATUS_MAP=$(python3 -c "
+import json
+try:
+    d=json.load(open('$PREV_FILE'))
+    surfs=d.get('surfaces',d)
+    for k,v in surfs.items():
+        if isinstance(v,dict) and 'status' in v:
+            print(f'{k}:{v[\"status\"]}',end=' ')
+except: pass
+" 2>/dev/null)
 fi
 
 CURRENT_TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-CURRENT_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CURRENT_TIMESTAMP" +%s 2>/dev/null || echo "0")
+CURRENT_EPOCH=$(compat_epoch "$CURRENT_TIMESTAMP" 2>/dev/null || echo "0")
 
 echo '{"timestamp":"'"$CURRENT_TIMESTAMP"'","surfaces":{'
 

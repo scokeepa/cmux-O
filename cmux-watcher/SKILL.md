@@ -256,7 +256,7 @@ case "$RESULT" in
   MAIN_DEAD*)
     # Main 하트비트 2분+ 없음 → 장애로 판단
     MAIN_SF=$(bash "$ROLE_SCRIPT" whois main | awk '{print $1}')
-    MAIN_WS=$(bash "$ROLE_SCRIPT" whois main | grep -oP 'workspace: \K[^,)]+')
+    MAIN_WS=$(bash "$ROLE_SCRIPT" whois main | sed -n 's/.*workspace: \([^,)]*\).*/\1/p')
 
     # 1단계: Main 화면 확인
     cmux read-screen --workspace "$MAIN_WS" --surface "$MAIN_SF" --lines 10

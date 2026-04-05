@@ -28,6 +28,37 @@ echo "   cmux 멀티 AI 협업 플랫폼 설치 (v7.3)"
 echo "  ===================================================="
 echo ""
 
+# ─── OS 감지 ──────────────────────────────────────
+
+OS_TYPE="unknown"
+case "$(uname -s)" in
+  Darwin) OS_TYPE="macos" ;;
+  Linux)
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      OS_TYPE="wsl"
+    else
+      OS_TYPE="linux"
+    fi
+    ;;
+esac
+
+if [ "$OS_TYPE" = "wsl" ]; then
+  echo "  ⚠  WSL 환경이 감지되었습니다."
+  echo "     알려진 제약사항:"
+  echo "     - tmux 클립보드 통합 제한 (win32yank 필요)"
+  echo "     - /tmp 경로가 Windows와 분리됨"
+  echo "     - systemd 미지원 시 데먼 자동 시작 수동 설정 필요"
+  echo ""
+  read -p "  설치를 계속하시겠습니까? [Y/n] " yn
+  if [ "${yn:-Y}" != "Y" ] && [ "${yn:-y}" != "y" ]; then
+    echo "  설치를 취소합니다."
+    exit 0
+  fi
+fi
+
+echo "  ✓ OS: $OS_TYPE ($(uname -m))"
+echo ""
+
 # ─── 사전 검증 ─────────────────────────────────────
 
 echo "[1/6] 사전 검증..."

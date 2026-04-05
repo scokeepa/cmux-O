@@ -53,6 +53,12 @@ SURFACE_COUNT=$(echo "$TREE" | grep -c "surface:" || echo "1")
 - **[포함]** → 기존 surface를 eagle-status에 등록, dispatch 대상에 추가
 - **[새로 시작]** → 기존 세션 무시, 컨트롤 타워만 신규 생성
 
+### Step 0.9: 크로스플랫폼 유틸리티 데먼 시작
+
+```bash
+python3 ~/.claude/skills/cmux-orchestrator/scripts/cmux_compat.py start 2>/dev/null
+```
+
 ### Step 1: 컨트롤 타워 workspace 이름 변경
 
 현재 workspace 이름을 **"컨트롤 타워"**로 변경합니다.

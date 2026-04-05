@@ -180,6 +180,9 @@ rm -f /tmp/cmux-roles.json
 rm -f /tmp/cmux-jarvis-*
 rm -f /tmp/cmux-jarvis-freeze-mode
 
+# 크로스플랫폼 유틸리티 데먼 종료
+python3 ~/.claude/skills/cmux-orchestrator/scripts/cmux_compat.py stop 2>/dev/null
+
 # pause 플래그
 rm -f /tmp/cmux-paused.flag
 
