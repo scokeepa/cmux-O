@@ -82,7 +82,7 @@ JARVIS: Bash(command="echo '{}' | tee ~/.claude/settings.json")
 ### 공격 경로 6: Bash로 Python/Node 간접 수정
 
 ```
-JARVIS: Bash(command="python3 -c \"import json; open('/Users/csm/.claude/settings.json','w').write('{}')\"")
+JARVIS: Bash(command="python3 -c \"import json; open('~/.claude/settings.json','w').write('{}')\"")
 
 → gate.sh 쓰기 패턴: (>|>>|cp|mv|tee|jq.*-w|sed -i).*settings.json
 → python3 -c "..." 에서 "settings.json" 문자열 포함하지만 쓰기 패턴 프리픽스 없음

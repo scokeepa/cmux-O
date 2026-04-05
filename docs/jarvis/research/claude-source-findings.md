@@ -1,6 +1,6 @@
 # Claude Code 소스 검증 결과 (S1~S12)
 
-> 소스 경로: /Users/csm/claude-code/source/src/
+> 소스 경로: ~/claude-code/source/src/
 
 ## 즉시 반영 (S1~S9)
 

@@ -76,7 +76,7 @@
 
 **A7. Obsidian 볼트 경로가 하드코딩 가능성**
 - 사용자마다 Obsidian 볼트 위치가 다름
-- `~/Documents/Obsidian/JARVIS/`, `/Users/csm/vault/`, `~/Obsidian/` 등
+- `~/Documents/Obsidian/JARVIS/`, `~/vault/`, `~/Obsidian/` 등
 - **해결안:** 최초 실행 시 볼트 경로 설정 → `~/.claude/cmux-jarvis/config.json`에 저장
 
 **A8. install.sh의 merge 방식 settings.json 수정이 위험**

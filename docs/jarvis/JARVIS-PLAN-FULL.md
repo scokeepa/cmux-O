@@ -422,7 +422,7 @@ ESCALATE       │ "deny" + cmux notify│ 거부 + 사용자 알림
 ## Claude Code 소스 분석 결과 (계획에 반영)
 
 ### 사용 가능한 Hook 이벤트 (28종)
-소스: `/Users/csm/claude-code/source/src/entrypoints/sdk/coreTypes.ts`
+소스: `~/claude-code/source/src/entrypoints/sdk/coreTypes.ts`
 
 JARVIS에 핵심적인 이벤트:
 | 이벤트 | 용도 | JARVIS 활용 |
