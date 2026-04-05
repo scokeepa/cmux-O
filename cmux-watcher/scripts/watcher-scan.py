@@ -1127,6 +1127,32 @@ def main() -> None:
         alerts = generate_alerts(eagle_data, vision_data)
         report = generate_report(eagle_data, alerts)
 
+        # 관리 세션 정보 추가
+        managed_sessions = {}
+        excluded_roles = {"main", "watcher", "jarvis"}
+        if ROLES_FILE.exists():
+            try:
+                roles = json.loads(ROLES_FILE.read_text())
+                for role_name, role_info in roles.items():
+                    if role_name in excluded_roles or not isinstance(role_info, dict):
+                        continue
+                    sf = role_info.get("surface", "").replace("surface:", "")
+                    if sf and sf in surfaces:
+                        managed_sessions[sf] = {
+                            "role": role_name,
+                            "status": surfaces[sf].get("status", "UNKNOWN"),
+                            "ai": surfaces[sf].get("ai", "unknown"),
+                        }
+                    elif sf:
+                        managed_sessions[sf] = {
+                            "role": role_name,
+                            "status": "NOT_IN_EAGLE",
+                            "ai": role_info.get("ai", "unknown"),
+                        }
+            except Exception:
+                pass
+        report["managed_sessions"] = managed_sessions
+
         # 리포트에 감지 계층 활성 현황 추가
         report["layers_active"] = {
             "L1_eagle": True,
@@ -1172,11 +1198,37 @@ def main() -> None:
         critical = [a for a in alerts if a["priority"] == "CRITICAL"]
         high = [a for a in alerts if a["priority"] == "HIGH"]
 
+        # 관리 세션 현황
+        managed = report.get("managed_sessions", {})
+
+        # 변동 감지: 이전 상태와 비교
+        prev_managed_file = Path("/tmp/cmux-watcher-prev-managed.json")
+        prev_managed = {}
+        if prev_managed_file.exists():
+            try:
+                prev_managed = json.loads(prev_managed_file.read_text())
+            except Exception:
+                pass
+
+        managed_changed = prev_managed != managed
+        if managed:
+            try:
+                prev_managed_file.write_text(json.dumps(managed, ensure_ascii=False))
+            except Exception:
+                pass
+
         # 상태 요약 항상 포함
         lines = [
             f"[WATCHER→MAIN] W:{summary.get('working',0)} I:{summary.get('idle',0)} "
             f"D:{summary.get('done',0)} E:{summary.get('error',0)} ST:{summary.get('stalled',0)}"
         ]
+
+        # 관리 세션 표시 (변동 시 또는 첫 리포트)
+        if managed and managed_changed:
+            lines.append("  📋 관리 세션:")
+            for sf, info in managed.items():
+                status_icon = {"WORKING": "🔵", "IDLE": "⚪", "DONE": "✅", "ERROR": "🔴"}.get(info["status"], "❓")
+                lines.append(f"    {status_icon} s:{sf} ({info['ai']}) [{info['status']}] — {info['role']}")
 
         # CRITICAL/HIGH 알림
         for a in (critical + high)[:5]:
@@ -1185,13 +1237,13 @@ def main() -> None:
         # IDLE/DONE surface 목록 — 재배정 촉구 강제
         idle_sfs = report.get("idle_surfaces", [])
         if idle_sfs:
-            lines.append(f"  ⚠️ IDLE: s:{', s:'.join(idle_sfs[:10])} 놀고 있음! 즉시 다음 작업 배정하세요!")
+            lines.append(f"  IDLE: s:{', s:'.join(idle_sfs[:10])}")
 
         # 전부 DONE/IDLE이면 강조
         total = summary.get("total_surfaces", 0)
         working = summary.get("working", 0)
         if total > 0 and working == 0:
-            lines.append("  🚨 ALL WORKERS IDLE — 전원 놀고 있음! 작업 배정 시급!")
+            lines.append("  ALL WORKERS IDLE")
 
         msg = "\n".join(lines[:8])
 
