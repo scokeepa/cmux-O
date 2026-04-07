@@ -51,17 +51,17 @@ Step 3: 컨텍스트 초기화 + cmux send 디스패치 (MANDATORY)
 # 복잡한 인증 로직 → Opus
 cmux new-split right
 # → surface:N, pane:M 반환
-cmux send --surface surface:N "claude --model opus --name auth-worker"
+cmux send --surface surface:N "claude --model opus --dangerously-skip-permissions --name auth-worker"
 cmux send-key --surface surface:N enter
 
 # 일반 API 구현 → Sonnet
 cmux new-split right
-cmux send --surface surface:N "claude --model sonnet --name api-worker"
+cmux send --surface surface:N "claude --model sonnet --dangerously-skip-permissions --name api-worker"
 cmux send-key --surface surface:N enter
 
 # 설정 파일 정리 → Haiku
 cmux new-split right
-cmux send --surface surface:N "claude --model haiku --name config-worker"
+cmux send --surface surface:N "claude --model haiku --dangerously-skip-permissions --name config-worker"
 cmux send-key --surface surface:N enter
 ```
 
@@ -434,17 +434,17 @@ cmux pipe-pane --surface surface:1 --command "grep -m1 DONE: > /tmp/surface1_don
 ```bash
 # 상급 작업 → Opus 팀원
 cmux new-split right
-cmux send --surface surface:N "claude --model opus --name worker-heavy"
+cmux send --surface surface:N "claude --model opus --dangerously-skip-permissions --name worker-heavy"
 cmux send-key --surface surface:N enter
 
 # 중급 작업 → Sonnet 팀원
 cmux new-split right
-cmux send --surface surface:N "claude --model sonnet --name worker-mid"
+cmux send --surface surface:N "claude --model sonnet --dangerously-skip-permissions --name worker-mid"
 cmux send-key --surface surface:N enter
 
 # 하급 작업 → Haiku 팀원
 cmux new-split right
-cmux send --surface surface:N "claude --model haiku --name worker-light"
+cmux send --surface surface:N "claude --model haiku --dangerously-skip-permissions --name worker-light"
 cmux send-key --surface surface:N enter
 
 # 작업 완료 후 제거
