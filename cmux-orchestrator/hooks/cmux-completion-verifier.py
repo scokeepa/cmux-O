@@ -26,8 +26,9 @@ def main():
     if not os.path.exists("/tmp/cmux-orch-enabled"):
         print(json.dumps({"decision": "approve"}))
         return
-    # Main surface에서만 검증 강제. 다른 세션은 자유.
+    # Main surface에서만 검증 강제. JARVIS/Watcher/팀장 등 다른 세션은 자유.
     if not is_main_surface():
+        # JARVIS, Watcher, 팀장 surface는 면제
         print(json.dumps({"decision": "approve"}))
         return
     try:
@@ -52,8 +53,7 @@ def main():
         try:
             mtime = os.path.getmtime(VERIFY_FLAG)
             if time.time() - mtime < MAX_AGE:
-                # 검증 통과, 플래그 삭제
-                os.unlink(VERIFY_FLAG)
+                # 검증 통과 (TTL 기반 자연 만료, 삭제하지 않음)
                 print(json.dumps({"decision": "approve"}))
                 return
         except OSError:

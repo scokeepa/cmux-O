@@ -98,13 +98,13 @@ def main():
         print(json.dumps({"decision": "approve"}))
         return
 
-    # cmux paste-buffer, send-key, rename-tab, display-message → 항상 허용
-    if re.search(r'cmux (paste-buffer|send-key|rename-tab|display-message|read-screen|capture-pane|tree|identify)', command):
+    # cmux 관련 명령 → 항상 허용 (set-buffer 제외, 위에서 이미 처리)
+    if re.search(r'cmux (paste-buffer|send-key|rename-tab|display-message|read-screen|capture-pane|tree|identify|notify|new-|close-|rename-|reorder-)', command):
         print(json.dumps({"decision": "approve"}))
         return
 
-    # sleep → 허용
-    if command.strip().startswith("sleep"):
+    # sleep, touch, echo, test, git 등 비-dispatch 명령 → 허용
+    if re.search(r'^(sleep|touch|echo|test |git |diff |grep |cat |ls |cd |python3 -c|bash -n|\[)', command.strip()):
         print(json.dumps({"decision": "approve"}))
         return
 

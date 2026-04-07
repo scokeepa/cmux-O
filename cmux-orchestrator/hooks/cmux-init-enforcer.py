@@ -57,6 +57,16 @@ def main():
         return
 
     command = inp.get("tool_input", {}).get("command", "")
+
+    # 알림성 메시지 면제 (/btw, notify, send-key, paste-buffer, read-screen 등)
+    if re.search(r'cmux (send-key|paste-buffer|read-screen|capture-pane|notify|rename-tab|tree|identify)', command):
+        print(json.dumps({"decision": "approve"}))
+        return
+    # /btw 전송은 알림이므로 면제
+    if '/btw' in command:
+        print(json.dumps({"decision": "approve"}))
+        return
+
     state = load_state()
 
     # /new 전송 감지 → 초기화 기록
