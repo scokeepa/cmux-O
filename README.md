@@ -48,7 +48,7 @@ graph TB
     subgraph ControlTower["컨트롤 타워"]
         Main["사장 (Main/COO)<br/>작업 분배 + 결과 취합 + 커밋"]
         Watcher["와쳐 (Watcher)<br/>실시간 감시 + 리소스 체크"]
-        Jarvis["자비스 (JARVIS)<br/>설정 진화 + 자동 최적화"]
+        Jarvis["자비스 (JARVIS)<br/>User 직속 참모<br/>설정 진화 + 정책 변경 + 문제 즉각 해결"]
     end
     
     subgraph Dept1["부서 1: Frontend"]
@@ -62,13 +62,18 @@ graph TB
         M3["팀원 (Codex)"]
     end
     
-    User -->|"작업 지시"| Main
+    User <-->|"설정 진화 + 정책 변경"| Jarvis
+    User -->|"프로젝트 작업 지시"| Main
     Main -->|"부서 편성 + 배정"| TL1
     Main -->|"부서 편성 + 배정"| TL2
     TL1 --> M1
     TL1 --> M2
+    TL2 --> M3
+    Jarvis -.->|"변경사항 전파"| Main
+    Jarvis -.->|"변경사항 전파"| Watcher
+    Jarvis -.->|"정책 전파"| TL1
+    Jarvis -.->|"정책 전파"| TL2
     Watcher -->|"상태 보고"| Main
-    Jarvis -->|"설정 개선 제안"| User
     Watcher -.->|"감시"| Dept1
     Watcher -.->|"감시"| Dept2
 ```
@@ -77,9 +82,9 @@ graph TB
 
 | 계층 | 구성 | 역할 |
 |------|------|------|
-| **컨트롤 타워** | 사장 + 와쳐 + 자비스 | 지휘, 감시, 최적화 |
-| **부서 (Department)** | 팀장 + 팀원 N명 | 실제 코딩 작업 |
-| **워커 (Worker)** | 개별 AI 세션 | 단위 태스크 수행 |
+| **CEO 직속** | 자비스 (JARVIS) | User와 직접 소통. 설정 진화 + 정책 변경 → Main/Watcher/팀장에 전파 |
+| **컨트롤 타워** | 사장 + 와쳐 | 프로젝트 작업 지휘 + 실시간 감시 |
+| **부서 (Department)** | 팀장 + 팀원 N명 | 팀장이 자율적으로 팀원 pane 생성 (난이도별 모델 선택) |
 
 ---
 
