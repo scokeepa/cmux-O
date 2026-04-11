@@ -80,6 +80,10 @@ docs/
 | simulations/ | 시뮬레이션 기록 보존 |
 | knowledge-raw/ | 9개 리서치 원본 보존 |
 
+## Changelog
+
+[CHANGELOG.md](CHANGELOG.md) — 전체 변경 이력
+
 ## 참조 문서 위치 (이동하지 않음)
 
 스킬 내부 참조 문서는 `cmux-*/references/`에 유지한다. 이동하면 스킬 로딩이 깨진다.
