@@ -157,6 +157,97 @@ def test_backup():
     print("  test_backup: PASS")
 
 
+def test_restore():
+    """backup → restore → count 일치 검증 (SQL 직접 추출 경로)."""
+    with tempfile.TemporaryDirectory() as td:
+        _setup(td)
+        _add_test_signals(td, 3)
+
+        col = pm._get_collection()
+        count_before = col.count()
+        assert count_before == 3
+
+        # backup 생성
+        rc_backup = pm.cmd_backup(max_backups=5)
+        assert rc_backup == 0
+
+        # backup 경로 찾기
+        parent = os.path.dirname(pm.PALACE_PATH)
+        backups = sorted([d for d in os.listdir(parent) if d.startswith("cmux-jarvis-palace-backup-")])
+        assert len(backups) >= 1
+        backup_path = os.path.join(parent, backups[-1])
+
+        # 새 palace 경로로 restore 테스트
+        restore_target = os.path.join(td, "restored_palace")
+        orig_path = pm.PALACE_PATH
+        pm.PALACE_PATH = restore_target
+        try:
+            rc_restore = pm.cmd_restore(backup_path, dry_run=False, overwrite=True)
+            assert rc_restore == 0
+
+            # 복원된 palace에서 count 확인
+            restored_col = pm._get_collection()
+            count_after = restored_col.count()
+            assert count_after == count_before, f"Expected {count_before}, got {count_after}"
+        finally:
+            pm.PALACE_PATH = orig_path
+    print("  test_restore: PASS")
+
+
+def test_restore_dry_run():
+    """dry_run 시 데이터 미변경 검증."""
+    with tempfile.TemporaryDirectory() as td:
+        _setup(td)
+        _add_test_signals(td, 2)
+        pm.cmd_backup(max_backups=5)
+
+        parent = os.path.dirname(pm.PALACE_PATH)
+        backups = sorted([d for d in os.listdir(parent) if d.startswith("cmux-jarvis-palace-backup-")])
+        backup_path = os.path.join(parent, backups[-1])
+
+        # dry_run
+        restore_target = os.path.join(td, "dry_palace")
+        orig_path = pm.PALACE_PATH
+        pm.PALACE_PATH = restore_target
+        try:
+            rc = pm.cmd_restore(backup_path, dry_run=True)
+            assert rc == 0
+            # dry_run이면 palace 디렉토리가 생성되지 않아야 함
+            assert not os.path.exists(restore_target)
+        finally:
+            pm.PALACE_PATH = orig_path
+    print("  test_restore_dry_run: PASS")
+
+
+def test_extract_drawers_from_sqlite():
+    """SQL 직접 추출이 ChromaDB API와 동일한 결과를 반환하는지 검증."""
+    with tempfile.TemporaryDirectory() as td:
+        _setup(td)
+        _add_test_signals(td, 4)
+
+        db_path = os.path.join(pm.PALACE_PATH, "chroma.sqlite3")
+        drawers = pm._extract_drawers_from_sqlite(db_path)
+        assert len(drawers) == 4
+
+        # 모든 drawer에 wing metadata가 있어야 함
+        for d in drawers:
+            assert "wing" in d["metadata"]
+            assert d["document"]
+    print("  test_extract_drawers_from_sqlite: PASS")
+
+
+def test_detect_chromadb_version():
+    """현재 ChromaDB 0.6.x로 생성된 palace의 버전 감지."""
+    with tempfile.TemporaryDirectory() as td:
+        _setup(td)
+        _add_test_signals(td, 1)
+
+        db_path = os.path.join(pm.PALACE_PATH, "chroma.sqlite3")
+        version = pm._detect_chromadb_version(db_path)
+        assert version in ("0.5.x", "0.6.x"), f"Unexpected version: {version}"
+    print("  test_detect_chromadb_version: PASS")
+
+
 def main():
     test_generate_l0_default()
     test_generate_l0_custom()

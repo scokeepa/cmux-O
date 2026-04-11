@@ -28,6 +28,8 @@ badclaude의 Electron overlay/whip 상호작용은 직접 이식하지 않는다
 
 Watcher는 `STALLED`, `IDLE`, `instruction_drift`, `no_done_report`, `rate_limited` 근거를 생성할 수 있지만, nudge를 직접 실행하지 않는다.
 
+> **구현 현황**: issuer 검증은 `ALLOWED_ISSUERS` set 기반 문자열 매칭 + `/tmp/cmux-roles.json` 기반 workspace 교차 검증 수행 (`jarvis_nudge.py:_validate_issuer_authority`). team_lead의 cross-workspace nudge를 차단한다. 런타임 roles 파일 없으면 ALLOWED_ISSUERS 검증만 적용.
+
 ## 트리거 조건
 
 | 트리거 | 정의 | 기본 임계값 |

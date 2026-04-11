@@ -118,6 +118,36 @@ def test_semantic_query():
     print("  test_semantic_query: PASS")
 
 
+def test_mentor_disabled_skips_emit():
+    """mentor.enabled=false 시 cmd_emit이 signal 저장하지 않고 바로 종료."""
+    with tempfile.TemporaryDirectory() as td:
+        _setup(td)
+        # config.json에 mentor.enabled: false 설정
+        config_dir = os.path.join(td, "config")
+        os.makedirs(config_dir, exist_ok=True)
+        config_path = os.path.join(config_dir, "config.json")
+        with open(config_path, "w") as f:
+            json.dump({"mentor": {"enabled": False}}, f)
+
+        orig = ms.JARVIS_CONFIG
+        ms.JARVIS_CONFIG = config_path
+        try:
+            event = {"type": "round_end", "data": {"scores": {
+                "decomp": 0.8, "verify": 0.7, "orch": 0.6,
+                "fail": 0.5, "ctx": 0.4, "meta": 0.3,
+            }, "evidence_count": 5, "confidence": 0.8}}
+            rc = ms.cmd_emit(json.dumps(event))
+            assert rc == 0
+
+            # signal이 저장되지 않았어야 함
+            col = ms._get_collection()
+            results = col.get(where={"wing": "cmux_mentor"})
+            assert len(results["ids"]) == 0
+        finally:
+            ms.JARVIS_CONFIG = orig
+    print("  test_mentor_disabled_skips_emit: PASS")
+
+
 def main():
     test_emit_signal()
     test_insufficient_evidence()

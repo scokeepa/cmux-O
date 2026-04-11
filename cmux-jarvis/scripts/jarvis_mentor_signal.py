@@ -31,6 +31,17 @@ from mentor_redactor import sanitize_name, sanitize_content
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
+JARVIS_CONFIG = os.path.expanduser("~/.claude/cmux-jarvis/config.json")
+
+
+def _is_mentor_enabled():
+    """config.json의 mentor.enabled 확인. 기본값 True."""
+    try:
+        with open(JARVIS_CONFIG) as f:
+            cfg = json.load(f)
+        return cfg.get("mentor", {}).get("enabled", True)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return True
 
 AXES = ("decomp", "verify", "orch", "fail", "ctx", "meta")
 
@@ -171,6 +182,10 @@ def _read_signals(since=None):
 
 
 def cmd_emit(event_json, round_id=None, window_size=5):
+    if not _is_mentor_enabled():
+        print("Mentor disabled via config.json")
+        return 0
+
     try:
         event = json.loads(event_json) if isinstance(event_json, str) else event_json
     except json.JSONDecodeError:

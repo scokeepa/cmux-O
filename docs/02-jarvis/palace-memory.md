@@ -22,10 +22,10 @@ mempalace의 L0~L3 패턴을 cmux에 맞춰 적용한다.
 
 | 계층 | 이름 | 토큰 예산 | 저장 위치 | 로딩 시점 |
 |------|------|-----------|-----------|-----------|
-| L0 | Identity | ~100 token | `~/.claude/cmux-jarvis/mentor/context/L0.md` | 세션 시작 시 항상 |
-| L1 | Essential Story | ~500-800 token | `~/.claude/cmux-jarvis/mentor/context/L1.md` | 세션 시작 시 항상 |
-| L2 | On-Demand | ~200-500 token/회 | signals.jsonl 필터 조회 | 사용자 요청 시 |
-| L3 | Deep Search | 무제한 | palace/index.sqlite FTS5 | evidence 부족 시에만 |
+| L0 | Identity | ~100 token | `~/.cmux-jarvis-palace/identity.txt` | 세션 시작 시 항상 |
+| L1 | Essential Story | ~500-800 token | ChromaDB palace 실시간 생성 (wing=cmux_mentor) | 세션 시작 시 항상 |
+| L2 | On-Demand | ~200-500 token/회 | ChromaDB palace query (wing=cmux_mentor) | 사용자 요청 시 |
+| L3 | Deep Search | 무제한 | ChromaDB semantic search (all-MiniLM-L6-v2) | evidence 부족 시에만 |
 
 **Wake-up 비용**: L0 + L1 합산 **600~900 token** 이내. 컨텍스트 윈도우의 95% 이상을 작업에 사용 가능.
 
@@ -191,22 +191,27 @@ python3 jarvis_palace_memory.py import --input /path/to/export.json
 python3 jarvis_palace_memory.py backup [--max-backups 5]
 ```
 
-- `~/.claude/cmux-jarvis/mentor/` → `mentor-backup-YYYYMMDD-HHMMSS/` 복사
-- 무결성 검증: 백업 내 모든 JSONL 파일의 각 행을 JSON parse
+- `~/.cmux-jarvis-palace/` → `cmux-jarvis-palace-backup-YYYYMMDD-HHMMSS/` 복사
+- 무결성 검증: 백업 내 SQLite `PRAGMA integrity_check`
 - retention: `--max-backups N`으로 오래된 백업 자동 정리 (기본 5)
+
+### Restore
+
+```bash
+python3 jarvis_palace_memory.py restore --backup-path /path [--dry-run] [--overwrite]
+```
+
+- SQL 직접 추출 기반 복원 (mempalace/migrate.py 패턴)
+- ChromaDB 0.6.x에서 copytree 복원 시 disk I/O error가 발생하므로, 백업 SQLite에서 raw SQL로 drawer를 추출하여 새 palace에 import
+- `--dry-run`: drawer 수/wing 분포만 출력
+- `--overwrite`: 기존 palace를 덮어쓰기 (미지정 시 자동 export 후 교체)
 
 ### Embedding 정책
 
-cmux palace memory는 ChromaDB가 아닌 JSONL/SQLite FTS5 기반이다. embedding이 없으므로:
-- export/import 시 embedding 포함/재생성 이슈가 없다
-- 검색은 텍스트 기반 (Phase 3+ SQLite FTS5)
-
-## ChromaDB/MCP Adapter 경계
-
-- Phase 1~2: JSONL + SQLite FTS5만 사용
-- Phase 3+: ChromaDB adapter는 optional import로만 제공
-- MCP adapter는 palace/index.sqlite와 drawer를 MCP tool로 노출하는 얇은 래퍼
-- adapter가 없어도 L0~L2는 정상 작동해야 한다
+cmux palace memory는 ChromaDB PersistentClient 기반이다.
+- 검색은 ChromaDB 내장 embedding (all-MiniLM-L6-v2, ONNX 로컬) 기반 시맨틱 검색
+- export/import 시 embedding은 포함하지 않으며, import 시 ChromaDB가 자동 재생성
+- signals.jsonl은 레거시 마이그레이션 소스로만 사용 (`migrate` 명령)
 
 ## SRP
 

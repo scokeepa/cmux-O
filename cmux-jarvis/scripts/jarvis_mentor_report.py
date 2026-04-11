@@ -27,8 +27,19 @@ import chromadb
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
+JARVIS_CONFIG = os.path.expanduser("~/.claude/cmux-jarvis/config.json")
 
 AXES = ("decomp", "verify", "orch", "fail", "ctx", "meta")
+
+
+def _is_mentor_enabled():
+    """config.json의 mentor.enabled 확인. 기본값 True."""
+    try:
+        with open(JARVIS_CONFIG) as f:
+            cfg = json.load(f)
+        return cfg.get("mentor", {}).get("enabled", True)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return True
 WEIGHTS = {"decomp": 0.20, "verify": 0.22, "orch": 0.20, "fail": 0.18, "ctx": 0.10, "meta": 0.10}
 MIN_SIGNALS = 3
 
@@ -203,6 +214,10 @@ def generate_report(signals):
 
 
 def cmd_generate(since=None):
+    if not _is_mentor_enabled():
+        print("Mentor disabled via config.json")
+        return 0
+
     signals = _read_signals(since)
     if len(signals) < MIN_SIGNALS:
         print(f"표본 부족으로 리포트를 보류합니다. (현재 {len(signals)}개, 최소 {MIN_SIGNALS}개 필요)")

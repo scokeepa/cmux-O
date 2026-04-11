@@ -15,8 +15,9 @@
 <p align="center">
   <img src="https://img.shields.io/badge/skills-9-blue?style=flat-square" alt="9 Skills">
   <img src="https://img.shields.io/badge/hooks-31-orange?style=flat-square" alt="31 Hooks">
+  <img src="https://img.shields.io/badge/restore-SQL%20extract-ff6b6b?style=flat-square" alt="SQL Extract Restore">
   <img src="https://img.shields.io/badge/files-216-green?style=flat-square" alt="216 Files">
-  <img src="https://img.shields.io/badge/tests-62%20passed-brightgreen?style=flat-square" alt="62 Tests">
+  <img src="https://img.shields.io/badge/tests-72%20passed-brightgreen?style=flat-square" alt="72 Tests">
   <img src="https://img.shields.io/badge/mentor%20scripts-6-blueviolet?style=flat-square" alt="6 Mentor Scripts">
   <img src="https://img.shields.io/badge/arch%20docs-22-informational?style=flat-square" alt="22 Architecture Docs">
   <img src="https://img.shields.io/badge/memory-ChromaDB-ff6b6b?style=flat-square" alt="ChromaDB">
@@ -347,6 +348,9 @@ Runs on macOS, Linux, and WSL. OS-specific commands are abstracted through `cmux
 | Palace chmod 0o700 | Owner-only directory permissions | Unauthorized palace access |
 | Input sanitize | `sanitize_name()` blocks path traversal, null bytes | Metadata injection |
 | ONNX CoreML guard | `ORT_DISABLE_COREML=1` on Apple Silicon | arm64 vector query segfault |
+| Mentor opt-out | `config.json` `mentor.enabled: false` | Signal/context/report all gated |
+| Nudge authority | `cmux-roles.json` workspace validation | Cross-workspace nudge blocked |
+| Restore safety | SQL direct extraction (migrate.py pattern) | ChromaDB 0.6.x disk I/O error |
 
 ---
 
@@ -419,7 +423,7 @@ When workers stall, the system can send role-appropriate nudges:
 | Boss | JARVIS (User approval) | L1 | Evidence bundle + recommendation |
 | Watcher | - | - | Evidence producer only, cannot execute nudges |
 
-Cooldown: 5 min per target. All nudges logged to ChromaDB `cmux_nudge` wing.
+Cooldown: 5 min per target. Cross-workspace nudge blocked (team_lead). All nudges logged to ChromaDB `cmux_nudge` wing. Send failure detected via returncode check (outcome: sent/failed).
 
 ---
 
@@ -449,15 +453,15 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 ```
   test_cmux_utils        ████████████████  9 tests   Core utilities
   test_hooks             ██████████        5 tests   Hook enforcement
-  test_mentor_signal     ████████████      6 tests   6-axis signal (ChromaDB)
-  test_palace_memory     ██████████████████ 9 tests  Palace memory (ChromaDB)
+  test_mentor_signal     ██████████████    7 tests   6-axis signal + mentor.enabled gate
+  test_palace_memory     ████████████████████████ 13 tests  Palace memory + restore + version detect
   test_redaction         ████████████████  8 tests   Privacy redaction + sanitize
   test_context_injection ██████████        5 tests   Prompt injection logic
-  test_nudge             ██████████████    7 tests   Nudge L1 + cooldown
+  test_nudge             ████████████████████████ 12 tests  Nudge L1 + cooldown + authority + wing isolation
   test_mentor_report     ████████████      6 tests   Report generation
   test_failure_class.    ██████████████    7 tests   Failure classification
   ─────────────────────────────────────────────────
-  Total                                   62 tests  ALL PASSED
+  Total                                   72 tests  ALL PASSED
 ```
 
 ### Codebase Scale
@@ -469,7 +473,7 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 | cmux-jarvis | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
 | Mentor scripts | 6 | ~1,300 | Signal, Memory, Redactor, Nudge, Report, Classifier |
 | Architecture docs | 22 | ~2,000 | System + JARVIS + operations + dev |
-| Tests | 9 | ~900 | 62 unit tests (ChromaDB-based) |
+| Tests | 10 | ~1,100 | 72 unit tests (ChromaDB-based) |
 
 ---
 

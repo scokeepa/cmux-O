@@ -30,6 +30,8 @@ PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
 COOLDOWN_SECONDS = 300
 ALLOWED_ISSUERS = {"team_lead", "boss", "jarvis"}
+ROLES_PATH = "/tmp/cmux-roles.json"
+SURFACE_MAP_PATH = "/tmp/cmux-surface-map.json"
 
 
 def _get_collection():
@@ -97,11 +99,63 @@ def _check_cooldown(target):
     return False, ""
 
 
+def _load_runtime_json(path):
+    """런타임 JSON 파일 로드. 파일 없으면 None 반환."""
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def _validate_issuer_authority(issuer, target):
+    """surface_map + roles.json 기반 issuer→target 권한 검증.
+
+    권한 매트릭스 (nudge-escalation.md):
+      - team_lead → 같은 workspace의 worker만
+      - boss → team_lead (모든 workspace)
+      - jarvis → boss surface만
+
+    런타임 파일 없으면 None (기존 ALLOWED_ISSUERS 검증만 적용).
+    권한 위반이면 에러 문자열 반환, 통과면 None.
+    """
+    roles = _load_runtime_json(ROLES_PATH)
+    if not roles:
+        return None  # 런타임 데이터 없음 — fallback to ALLOWED_ISSUERS only
+
+    # issuer의 workspace 찾기
+    issuer_info = roles.get(issuer)
+    if not issuer_info:
+        # roles.json에 issuer 역할이 없으면 검증 스킵 (단독 실행 등)
+        return None
+
+    issuer_ws = issuer_info.get("workspace")
+
+    # target surface의 workspace 찾기
+    target_ws = None
+    for role_name, info in roles.items():
+        if info.get("surface") == target:
+            target_ws = info.get("workspace")
+            break
+
+    if not target_ws:
+        return None  # target이 roles에 없으면 검증 스킵
+
+    # 권한 매트릭스 적용
+    if issuer == "team_lead" and issuer_ws and target_ws:
+        if issuer_ws != target_ws:
+            return f"team_lead in {issuer_ws} cannot nudge target in {target_ws} (cross-workspace)"
+
+    return None  # 통과
+
+
 def _cmux_send(target, message):
     try:
-        subprocess.run(["cmux", "send", "--surface", target, message], capture_output=True, text=True, timeout=5)
-        subprocess.run(["cmux", "send-key", "--surface", target, "enter"], capture_output=True, text=True, timeout=5)
-        return True
+        r1 = subprocess.run(["cmux", "send", "--surface", target, message], capture_output=True, text=True, timeout=5)
+        if r1.returncode != 0:
+            return False
+        r2 = subprocess.run(["cmux", "send-key", "--surface", target, "enter"], capture_output=True, text=True, timeout=5)
+        return r2.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
 
@@ -116,6 +170,12 @@ def cmd_send(target, issuer, reason, evidence, level="L1"):
     if issuer not in ALLOWED_ISSUERS:
         print(json.dumps({"error": f"invalid issuer: {issuer}", "code": 1}))
         return 1
+
+    # surface_map 기반 권한 검증 (런타임 파일 있을 때만)
+    auth_error = _validate_issuer_authority(issuer, target)
+    if auth_error:
+        print(json.dumps({"error": auth_error, "code": 4}))
+        return 4
 
     in_cooldown, until = _check_cooldown(target)
     if in_cooldown:
@@ -135,10 +195,14 @@ def cmd_send(target, issuer, reason, evidence, level="L1"):
     event = {
         "timestamp": utc_str(now), "target_surface_id": target, "issuer_role": issuer,
         "reason_code": reason, "evidence_span": evidence, "level": level,
-        "cooldown_until": utc_str(now + timedelta(seconds=COOLDOWN_SECONDS)), "outcome": "pending",
+        "cooldown_until": utc_str(now + timedelta(seconds=COOLDOWN_SECONDS)),
+        "outcome": "sent" if sent else "failed",
     }
     _store_nudge_audit(event)
 
+    if not sent:
+        print(json.dumps({"ok": False, "error": "cmux send failed", "code": 3, "audit": event}, ensure_ascii=False, indent=2))
+        return 3
     print(json.dumps({"ok": True, "message": message, "sent_via_cmux": sent, "audit": event}, ensure_ascii=False, indent=2))
     return 0
 

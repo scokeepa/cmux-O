@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-04-12 (Red-Team Findings Root Cause Fix)
+
+**7건 레드팀 Findings + 3건 잔여 리스크 — 전수 근본 원인 해결**
+
+원본 레포(milla-jovovich/mempalace) `migrate.py`, `repair.py`, `exporter.py`, `tests/conftest.py` 패턴 참조.
+
+**테스트 환경 안정화 (F1)**
+- `tests/conftest.py` 신규 — pytest 최초 로드 시 `ORT_DISABLE_COREML=1` + `ANONYMIZED_TELEMETRY=False` + posthog 로거 억제
+- 결과: 25 failed → 0 failed (62/62 → 72/72)
+
+**Palace Restore 명령 추가 (F3)**
+- `_detect_chromadb_version()` — ChromaDB SQLite 스키마로 0.5.x/0.6.x/1.x 판별 (mempalace/migrate.py 패턴)
+- `_extract_drawers_from_sqlite()` — raw SQL로 drawer 직접 추출, ChromaDB API 우회 (버전 불일치/복사본 DB 호환)
+- `cmd_restore()` — SQL 추출 → 임시 palace 생성 → shutil.move 교체 (ChromaDB 0.6.x disk I/O error 회피)
+- argparse `restore` 서브커맨드 (`--backup-path`, `--dry-run`, `--overwrite`)
+
+**Nudge 전송 검증 (F5)**
+- `_cmux_send()` returncode 검사 추가 — 전송 실패 시 `False` 반환
+- `cmd_send()` outcome: `"pending"` → `"sent"/"failed"`, 실패 시 return 3
+
+**Surface_map 기반 역할 검증 (F6)**
+- `_validate_issuer_authority()` — `/tmp/cmux-roles.json` 기반 workspace 교차 검증
+- team_lead의 cross-workspace nudge 차단 (code 4)
+- 런타임 파일 없으면 기존 ALLOWED_ISSUERS fallback
+
+**Mentor.enabled config 게이팅 (F7)**
+- `_is_mentor_enabled()` — `~/.claude/cmux-jarvis/config.json` `mentor.enabled` 확인
+- 게이팅 지점 3곳: `cmd_emit()`, `cmd_generate_context()`, `cmd_generate()`
+- 비활성화 시 signal 수집, context 생성, report 생성 모두 중단
+
+**Wing 격리 보장 (F4)**
+- `test_nudge_excluded_from_mentor_context` — cmux_nudge wing 데이터가 mentor context에 미포함 확인
+
+**문서 SSOT 정렬 (F2)**
+- `palace-memory.md` — L2/L3 저장소, embedding 정책, backup/restore ChromaDB 기준 재작성
+- `system-overview.md` — 멘토 신호 SSOT 경로 `~/.cmux-jarvis-palace/ (ChromaDB)` 변경
+- `privacy-policy.md` — 저장소, retention, delete, export ChromaDB 기준 + mentor.enabled 구현 반영
+- `nudge-escalation.md` — workspace 교차 검증 구현 현황 업데이트
+- `test-guide.md` — 72 tests, conftest.py ChromaDB 환경 설명
+
+**Testing: 62 → 72 tests (+10)**
+- test_palace_memory (+4): restore, restore_dry_run, extract_drawers_from_sqlite, detect_chromadb_version
+- test_nudge (+5): nudge_excluded_from_mentor, send_failure_outcome, cross_workspace_blocked, same_workspace_allowed, no_roles_fallback
+- test_mentor_signal (+1): mentor_disabled_skips_emit
+
 ## 2026-04-11 (Integration Audit Fix)
 
 **원본 레포 재검토 — 통합 오류 8건 수정**

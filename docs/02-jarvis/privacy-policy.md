@@ -35,9 +35,9 @@ orchestration 이벤트에서 파생한 신호만 수집한다:
 | 저장소 | 경로 | 용도 | 변경 |
 |--------|------|------|------|
 | 운영 메모리 | `~/.claude/memory/cmux/journal.jsonl`, `memories.json` | orchestration event memory | 기존 유지, 변경 없음 |
-| 멘토 신호 | `~/.claude/cmux-jarvis/mentor/signals.jsonl` | derived signal (6축 score, 안티패턴, confidence) | 신규 |
-| 멘토 L0/L1 | `~/.claude/cmux-jarvis/mentor/context/L0.md`, `L1.md` | 세션 시작 시 context injection용 | 신규 |
-| raw drawer | `~/.claude/cmux-jarvis/mentor/palace/drawers/` | opt-in 원문 저장 | 신규, opt-in만 |
+| 멘토 신호 | `~/.cmux-jarvis-palace/` (ChromaDB, wing=cmux_mentor) | derived signal (6축 score, 안티패턴, confidence) | ChromaDB palace |
+| 멘토 L0/L1 | L0: `~/.cmux-jarvis-palace/identity.txt`, L1: ChromaDB 실시간 생성 | 세션 시작 시 context injection용 | ChromaDB palace |
+| 재촉 감사 | `~/.cmux-jarvis-palace/` (ChromaDB, wing=cmux_nudge) | nudge 전송 기록 | ChromaDB palace |
 | 텔레메트리 | `~/.claude/cmux-jarvis/telemetry/events-YYYY-MM-DD.jsonl` | JARVIS 이벤트 | 기존 유지 |
 
 운영 메모리와 멘토 신호는 별도 저장소에 분리한다. 하나의 `memories.json`에 합치지 않는다.
@@ -46,9 +46,9 @@ orchestration 이벤트에서 파생한 신호만 수집한다:
 
 | 데이터 | 보존 기간 | 만료 처리 |
 |--------|-----------|-----------|
-| signals.jsonl | 90일 | archive (압축 이동) |
-| L0.md, L1.md | 세션 시작 시 재생성 | 영구 보존 불필요 |
-| raw drawer | 사용자 설정 (기본 30일) | 삭제 |
+| ChromaDB cmux_mentor drawers | 90일 | `cmd_prune` (keep_days 기반 삭제) |
+| L0 (identity.txt) | 사용자 편집 가능 | 영구 보존 |
+| L1 | 세션 시작 시 ChromaDB에서 실시간 생성 | 영구 보존 불필요 |
 | telemetry events | 기존 정책 유지 | ring buffer + daily JSONL |
 
 ## Prompt Injection 제한
@@ -72,22 +72,21 @@ orchestration 이벤트에서 파생한 신호만 수집한다:
 }
 ```
 
-비활성화하면 signal 수집, coaching hint, weekly report가 모두 중단된다.
+비활성화하면 signal 수집(`cmd_emit`), context 생성(`cmd_generate_context`), weekly report(`cmd_generate`)가 모두 중단된다.
 
 ### delete
 
 사용자는 다음을 삭제할 수 있다:
 
-- raw drawer 전체: `~/.claude/cmux-jarvis/mentor/palace/drawers/` 삭제
-- signal 전체: `~/.claude/cmux-jarvis/mentor/signals.jsonl` 삭제
-- 특정 기간: retention policy에 따른 범위 삭제
+- palace 전체: `~/.cmux-jarvis-palace/` 디렉터리 삭제 (삭제 전 export 권장)
+- 특정 기간: `python3 jarvis_mentor_signal.py prune --keep-days N`
+- 특정 wing: ChromaDB API로 wing 필터 삭제
 
 ### export
 
 사용자는 데이터를 내보낼 수 있다:
 
-- signals.jsonl: JSONL 형태 그대로
-- raw drawer: JSON 형태로 내보내기
+- `python3 jarvis_palace_memory.py export --output backup.json` (JSON 형태)
 - weekly report: Markdown 형태
 
 ## 민감 정보 필터링

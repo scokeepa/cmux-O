@@ -58,7 +58,7 @@ IDLE → DISPATCH → COLLECT → VERIFY → COMMIT → IDLE
 | runtime surface 상태 | `cmux tree --all` + `/tmp/cmux-surface-map.json` | `/tmp/cmux-surface-scan.json` |
 | control tower role | `/tmp/cmux-roles.json` | tab name |
 | 운영 메모리 | `~/.claude/memory/cmux/journal.jsonl` | `memories.json` |
-| 멘토 신호 | `~/.claude/cmux-jarvis/mentor/signals.jsonl` | L0.md, L1.md |
+| 멘토 신호 | `~/.cmux-jarvis-palace/` (ChromaDB, wing=cmux_mentor) | signals.jsonl은 legacy migration source |
 | JARVIS 텔레메트리 | `~/.claude/cmux-jarvis/telemetry/events-*.jsonl` | ring buffer |
 
 ## 참조

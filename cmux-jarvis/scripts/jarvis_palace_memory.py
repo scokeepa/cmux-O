@@ -11,6 +11,7 @@ Usage:
     python3 jarvis_palace_memory.py export --output /path/to/export.json
     python3 jarvis_palace_memory.py import --input /path/to/export.json
     python3 jarvis_palace_memory.py backup [--max-backups 5]
+    python3 jarvis_palace_memory.py restore --backup-path /path [--dry-run] [--overwrite]
     python3 jarvis_palace_memory.py migrate  # signals.jsonl → ChromaDB 이관
 """
 
@@ -48,6 +49,17 @@ Boss(Main), Watcher, JARVIS로 구성된 컨트롤 타워를 운영.
 부서별 팀장-팀원 구조로 멀티 AI 작업을 조율."""
 
 AXES = ("decomp", "verify", "orch", "fail", "ctx", "meta")
+JARVIS_CONFIG = os.path.expanduser("~/.claude/cmux-jarvis/config.json")
+
+
+def _is_mentor_enabled():
+    """config.json의 mentor.enabled 확인. 기본값 True."""
+    try:
+        with open(JARVIS_CONFIG) as f:
+            cfg = json.load(f)
+        return cfg.get("mentor", {}).get("enabled", True)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return True
 
 
 def _get_collection():
@@ -144,6 +156,10 @@ def generate_l1():
 
 def cmd_generate_context():
     """Generate L0 + L1 and print."""
+    if not _is_mentor_enabled():
+        print("Mentor disabled via config.json")
+        return 0
+
     l0 = generate_l0()
     l1 = generate_l1()
 
@@ -352,6 +368,179 @@ def cmd_backup(max_backups=5):
     return 0
 
 
+# ── Restore (mempalace/migrate.py 패턴: SQL 직접 추출) ─────────────
+
+
+def _detect_chromadb_version(db_path):
+    """ChromaDB SQLite 스키마로 버전 계열을 판별.
+
+    mempalace/migrate.py detect_chromadb_version() 패턴.
+    - 1.x: collections 테이블에 schema_str 컬럼 존재
+    - 0.6.x: embeddings_queue 테이블 존재, schema_str 없음
+    - unknown: 알 수 없는 스키마
+    """
+    import sqlite3
+    conn = sqlite3.connect(db_path)
+    try:
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(collections)").fetchall()]
+        if "schema_str" in cols:
+            return "1.x"
+        tables = [r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()]
+        if "embeddings_queue" in tables:
+            return "0.6.x"
+        if "embeddings" in tables:
+            return "0.5.x"
+        return "unknown"
+    finally:
+        conn.close()
+
+
+def _extract_drawers_from_sqlite(db_path):
+    """ChromaDB API를 우회하여 raw SQL로 drawer를 추출.
+
+    mempalace/migrate.py extract_drawers_from_sqlite() 패턴.
+    버전 감지 후 버전별 SQL을 사용한다.
+    지원: 0.5.x, 0.6.x, 1.x. unknown은 0.6.x SQL로 시도.
+    """
+    import sqlite3
+    version = _detect_chromadb_version(db_path)
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+
+    # 0.5.x ~ 0.6.x: embeddings + embedding_metadata 테이블
+    # 1.x: 동일 테이블 구조 + schema_str 컬럼 (drawer 추출 SQL은 동일)
+    try:
+        rows = conn.execute("""
+            SELECT e.embedding_id,
+                   MAX(CASE WHEN em.key = 'chroma:document' THEN em.string_value END) as document
+            FROM embeddings e
+            JOIN embedding_metadata em ON em.id = e.id
+            GROUP BY e.embedding_id
+        """).fetchall()
+    except Exception as e:
+        conn.close()
+        raise RuntimeError(
+            f"ChromaDB {version} schema not supported for SQL extraction: {e}"
+        ) from e
+
+    drawers = []
+    for row in rows:
+        eid = row["embedding_id"]
+        doc = row["document"]
+        if not doc:
+            continue
+        # bool_value 포함 (1.x에서 추가될 수 있음, mempalace/migrate.py 패턴)
+        meta_rows = conn.execute("""
+            SELECT em.key, em.string_value, em.int_value, em.float_value, em.bool_value
+            FROM embedding_metadata em
+            JOIN embeddings e ON e.id = em.id
+            WHERE e.embedding_id = ? AND em.key NOT LIKE 'chroma:%'
+        """, (eid,)).fetchall()
+
+        metadata = {}
+        for mr in meta_rows:
+            k = mr["key"]
+            if mr["string_value"] is not None:
+                metadata[k] = mr["string_value"]
+            elif mr["int_value"] is not None:
+                metadata[k] = mr["int_value"]
+            elif mr["float_value"] is not None:
+                metadata[k] = mr["float_value"]
+            elif mr["bool_value"] is not None:
+                metadata[k] = bool(mr["bool_value"])
+        drawers.append({"id": eid, "document": doc, "metadata": metadata})
+    conn.close()
+    return drawers
+
+
+def cmd_restore(backup_path, dry_run=False, overwrite=False):
+    """Restore palace from a backup directory.
+
+    SQL 직접 추출 → 새 임시 palace 생성 → move 교체 (migrate.py 패턴).
+    ChromaDB 0.6.x에서 copytree 복원 시 disk I/O error가 발생하므로
+    이 방식을 사용한다.
+    """
+    backup_path = os.path.expanduser(backup_path)
+    db_file = os.path.join(backup_path, "chroma.sqlite3")
+    if not os.path.isfile(db_file):
+        print(f"Error: no chroma.sqlite3 in {backup_path}")
+        return 1
+
+    # SQL 직접 추출
+    drawers = _extract_drawers_from_sqlite(db_file)
+    if not drawers:
+        print("No drawers found in backup.")
+        return 0
+
+    # wing 분포 표시
+    wings = {}
+    for d in drawers:
+        w = d["metadata"].get("wing", "?")
+        wings[w] = wings.get(w, 0) + 1
+    print(f"Backup contains {len(drawers)} drawers:")
+    for w, c in sorted(wings.items()):
+        print(f"  {w}: {c}")
+
+    if dry_run:
+        print("Dry run — no changes made.")
+        return 0
+
+    # 현재 palace에 데이터가 있으면 자동 export
+    if os.path.exists(PALACE_PATH) and not overwrite:
+        try:
+            col = _get_collection()
+            existing = col.count()
+            if existing > 0:
+                ts = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+                export_file = str(Path(PALACE_PATH).parent / f"palace-pre-restore-{ts}.json")
+                cmd_export(export_file)
+                print(f"Existing {existing} drawers exported to {export_file}")
+        except Exception:
+            pass
+
+    # 새 임시 경로에 palace 생성 → import → move (migrate.py 패턴)
+    import tempfile
+    temp_palace = tempfile.mkdtemp(prefix="cmux_palace_restore_")
+    try:
+        client = chromadb.PersistentClient(path=temp_palace)
+        col = client.get_or_create_collection(COLLECTION_NAME)
+
+        batch_size = 100
+        imported = 0
+        for i in range(0, len(drawers), batch_size):
+            batch = drawers[i:i + batch_size]
+            col.add(
+                ids=[d["id"] for d in batch],
+                documents=[d["document"] for d in batch],
+                metadatas=[d["metadata"] for d in batch],
+            )
+            imported += len(batch)
+
+        final_count = col.count()
+        del col
+        del client
+
+        # 교체
+        if os.path.exists(PALACE_PATH):
+            shutil.rmtree(PALACE_PATH)
+        shutil.move(temp_palace, PALACE_PATH)
+        try:
+            os.chmod(PALACE_PATH, 0o700)
+        except (OSError, NotImplementedError):
+            pass
+
+        print(f"Restored {final_count} drawers to {PALACE_PATH}")
+        return 0
+    except Exception as e:
+        # 실패 시 임시 디렉토리 정리
+        shutil.rmtree(temp_palace, ignore_errors=True)
+        print(f"Restore failed: {e}")
+        return 1
+
+
 # ── Migration (signals.jsonl → ChromaDB) ───────────────────────────
 
 
@@ -434,6 +623,11 @@ def main():
     p_backup = sub.add_parser("backup", help="Create backup")
     p_backup.add_argument("--max-backups", type=int, default=5)
 
+    p_restore = sub.add_parser("restore", help="Restore palace from backup")
+    p_restore.add_argument("--backup-path", required=True)
+    p_restore.add_argument("--dry-run", action="store_true")
+    p_restore.add_argument("--overwrite", action="store_true")
+
     sub.add_parser("migrate", help="Migrate legacy signals.jsonl → ChromaDB")
 
     args = parser.parse_args()
@@ -450,6 +644,8 @@ def main():
         return cmd_import(args.input, skip_existing=not args.no_skip_existing)
     elif args.cmd == "backup":
         return cmd_backup(args.max_backups)
+    elif args.cmd == "restore":
+        return cmd_restore(args.backup_path, args.dry_run, args.overwrite)
     elif args.cmd == "migrate":
         return cmd_migrate()
     else:
