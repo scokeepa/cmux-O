@@ -27,22 +27,37 @@ description: cmux 멀티 AI 오케스트레이션
 
 ## Step 1: 설정 로드 + 가용 워커 확인
 
+**두 소스를 교차 검증해야 한다.** config에만 있고 실제 cmux에 없는 surface는 무시.
+
 ```bash
-# 설정 파일 로드
+# 1. 설정 파일 로드 — AI 프로파일, reset 명령, workspace 매핑
 cat ~/.claude/skills/cmux-orchestrator/config/orchestra-config.json
 ```
 
-설정에서 확인할 것:
-- `surfaces` — 사용 가능한 워커 surface 목록 (surface 1=Main, 2=Watcher 제외)
-- 각 surface의 `ai`, `reset_cmd`, `workspace`, `difficulty`
-- `workspaces` — workspace 그룹별 surface 매핑
+```bash
+# 2. 실제 존재하는 surface 확인 (필수 — config와 교차 검증)
+cmux tree --all
+```
 
 ```bash
-# 현재 surface 상태 확인
+# 3. Watcher가 갱신한 eagle 상태 확인
 cat /tmp/cmux-eagle-status.json 2>/dev/null
 ```
 
-IDLE surface = 즉시 배정 가능. WORKING surface = 이미 작업 중.
+**교차 검증 방법:**
+- config의 `surfaces` 목록에서 surface ID를 추출
+- `cmux tree --all` 출력에서 실제 존재하는 surface ID를 추출
+- **양쪽 모두에 있는 surface만** 디스패치 대상으로 사용
+- surface 1=Main, 2=Watcher는 워커 대상에서 제외
+
+**가용 워커가 0개인 경우:**
+```
+"현재 사용 가능한 워커 surface가 없습니다.
+다음 방법으로 워커를 추가해주세요:
+- /cmux-config detect  (설치된 AI 자동 감지)
+- 수동으로 cmux에서 새 workspace를 열고 AI를 시작"
+```
+→ 워커 없이 직접 작업하지 않는다. 사용자에게 안내 후 대기.
 
 ---
 
@@ -74,6 +89,35 @@ IDLE surface = 즉시 배정 가능. WORKING surface = 이미 작업 중.
 
 ---
 
+## Step 2.5: 워커 생성 (가용 워커 부족 시)
+
+Step 1에서 가용 워커가 부족하면 새 워커를 생성한다.
+
+```bash
+# 새 workspace 생성 (프로젝트 디렉토리 기준)
+cmux new-workspace --name "Worker-Frontend" --cwd $(pwd)
+# → 출력에서 새 workspace ID와 surface ID를 확인
+```
+
+```bash
+# 새 surface에서 AI CLI 시작
+# config의 presets에서 해당 AI의 start 명령을 사용
+cmux send --workspace workspace:N --surface surface:N "codex"
+cmux send-key --workspace workspace:N --surface surface:N enter
+
+# AI 로딩 대기 (30초 폴링)
+for i in $(seq 1 10); do
+    sleep 3
+    SCREEN=$(cmux read-screen --workspace workspace:N --surface surface:N --lines 5 2>/dev/null)
+    if echo "$SCREEN" | grep -qE "❯|shortcuts|trust|ready"; then break; fi
+done
+cmux send-key --workspace workspace:N --surface surface:N enter
+```
+
+> 워커 생성 후 `cmux tree --all`로 새 surface ID를 확인하고, 이후 Step에서 이 ID를 사용한다.
+
+---
+
 ## Step 3: 워크트리 생성 (2개+ surface 배정 시 필수)
 
 2개 이상 surface에 작업을 배정하면 git 충돌 방지를 위해 워크트리를 생성합니다.
@@ -95,14 +139,21 @@ MiniMax는 절대 경로를 무시하므로 워크트리 대신 메인 프로젝
 
 ## Step 4: 디스패치
 
+### workspace 파라미터 규칙 (GATE 8)
+
+`cmux tree --all`에서 대상 surface가 속한 workspace를 확인하여 `--workspace` 파라미터를 결정한다.
+
+- **같은 workspace의 surface** → `--workspace` 생략 가능
+- **다른 workspace의 surface** → `--workspace workspace:N` 필수 (없으면 "Surface is not a terminal" 에러)
+
+아래 예시의 `WS`와 `SF`는 Step 1에서 확인한 실제 workspace/surface ID로 대체한다.
+
 ### 4-1. 컨텍스트 초기화 (배정 전 필수)
 
 ```bash
-# orchestra-config.json에서 해당 surface의 reset_cmd 사용
-# 예: MiniMax는 /clear, Codex는 /new, GLM은 /new
-
-cmux send --workspace workspace:1 --surface surface:3 "/clear"
-cmux send-key --workspace workspace:1 --surface surface:3 enter
+# config에서 해당 surface의 reset_cmd 확인 (예: /clear, /new)
+cmux send --workspace $WS --surface $SF "/clear"
+cmux send-key --workspace $WS --surface $SF enter
 sleep 3
 ```
 
@@ -110,11 +161,11 @@ sleep 3
 
 ```bash
 # 짧은 프롬프트 (150자 이하)
-cmux send --workspace workspace:1 --surface surface:3 "TASK: API 엔드포인트 구현. POST /api/auth/login 구현해. JWT 토큰 발행. 프로젝트 경로: /tmp/wt-taskA-r1430. 완료 후 DONE: 요약 출력."
-cmux send-key --workspace workspace:1 --surface surface:3 enter
+cmux send --workspace $WS --surface $SF "TASK: API 엔드포인트 구현. POST /api/auth/login. 프로젝트 경로: /tmp/wt-taskA-r1430. 완료 후 DONE: 요약 출력."
+cmux send-key --workspace $WS --surface $SF enter
 
 # 긴 프롬프트 (150자 초과)
-cmux set-buffer --name task_s3 -- "TASK: [상세 작업 내용]
+cmux set-buffer --name task_sf -- "TASK: [상세 작업 내용]
 
 프로젝트 경로: /tmp/wt-taskA-r1430
 
@@ -124,8 +175,8 @@ cmux set-buffer --name task_s3 -- "TASK: [상세 작업 내용]
 - 완료 신호: DONE: 요약
 
 ⛔ subagent/git 사용 금지. 당신은 worker입니다."
-cmux paste-buffer --workspace workspace:1 --name task_s3 --surface surface:3
-cmux send-key --workspace workspace:1 --surface surface:3 enter
+cmux paste-buffer --workspace $WS --name task_sf --surface $SF
+cmux send-key --workspace $WS --surface $SF enter
 ```
 
 ### 4-3. 실행 확인
@@ -133,7 +184,7 @@ cmux send-key --workspace workspace:1 --surface surface:3 enter
 ```bash
 # 3초 후 확인
 sleep 3
-cmux read-screen --workspace workspace:1 --surface surface:3 --lines 10
+cmux read-screen --workspace $WS --surface $SF --lines 10
 # "Working", "thinking" 등이 보이면 실행 중
 
 # 30초 후에도 변화 없으면 STALL → 재전송 또는 다른 surface 배정
@@ -173,7 +224,7 @@ cmux send-key --workspace workspace:N --surface surface:N enter
 cat /tmp/cmux-eagle-status.json
 
 # 직접 확인
-cmux read-screen --workspace workspace:1 --surface surface:3 --lines 20
+cmux read-screen --workspace $WS --surface $SF --lines 20
 ```
 
 상태 판별:
@@ -188,8 +239,8 @@ cmux read-screen --workspace workspace:1 --surface surface:3 --lines 20
 
 ```bash
 # 각 surface의 출력 수집
-cmux read-screen --workspace workspace:1 --surface surface:3 --scrollback --lines 80
-cmux read-screen --workspace workspace:1 --surface surface:5 --scrollback --lines 80
+cmux read-screen --workspace $WS --surface $SF --scrollback --lines 80
+# 각 배정된 surface에 대해 반복
 ```
 
 ### 5-3. DONE 품질 검증 (Iron Rule)
@@ -203,8 +254,8 @@ DONE 보고를 그대로 믿지 않는다. 실제 결과물을 확인:
 껍데기 발견 시: DONE 거부 → 재작업 지시
 
 ```bash
-cmux send --workspace workspace:1 --surface surface:3 "실제 구현이 빠져있음. 다음 항목을 구현 후 DONE 재보고: [누락 항목]"
-cmux send-key --workspace workspace:1 --surface surface:3 enter
+cmux send --workspace $WS --surface $SF "실제 구현이 빠져있음. 다음 항목을 구현 후 DONE 재보고: [누락 항목]"
+cmux send-key --workspace $WS --surface $SF enter
 ```
 
 ---
