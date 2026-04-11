@@ -17,7 +17,13 @@ import subprocess
 import sys
 from datetime import datetime, timezone, timedelta
 
-os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+import logging
+import platform
+
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
+if platform.machine() == "arm64" and platform.system() == "Darwin":
+    os.environ.setdefault("ORT_DISABLE_COREML", "1")
+
 import chromadb
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
@@ -28,6 +34,10 @@ ALLOWED_ISSUERS = {"team_lead", "boss", "jarvis"}
 
 def _get_collection():
     os.makedirs(PALACE_PATH, exist_ok=True)
+    try:
+        os.chmod(PALACE_PATH, 0o700)
+    except (OSError, NotImplementedError):
+        pass
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
         return client.get_collection(COLLECTION_NAME)

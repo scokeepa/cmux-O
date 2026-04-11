@@ -23,7 +23,15 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+import logging
+import platform
+
+# mempalace/__init__.py 동일 패턴: posthog warning 숨기기 (텔레메트리 유지)
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
+# Apple Silicon ONNX CoreML segfault 방지 (mempalace/__init__.py:18-19)
+if platform.machine() == "arm64" and platform.system() == "Darwin":
+    os.environ.setdefault("ORT_DISABLE_COREML", "1")
+
 import chromadb
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
@@ -45,6 +53,10 @@ AXES = ("decomp", "verify", "orch", "fail", "ctx", "meta")
 def _get_collection():
     """Get or create the cmux mentor palace collection."""
     os.makedirs(PALACE_PATH, exist_ok=True)
+    try:
+        os.chmod(PALACE_PATH, 0o700)  # mempalace/palace.py:41 동일
+    except (OSError, NotImplementedError):
+        pass
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
         return client.get_collection(COLLECTION_NAME)

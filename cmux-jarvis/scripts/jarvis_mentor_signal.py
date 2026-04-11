@@ -18,8 +18,16 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 
-os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+import logging
+import platform
+
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
+if platform.machine() == "arm64" and platform.system() == "Darwin":
+    os.environ.setdefault("ORT_DISABLE_COREML", "1")
+
 import chromadb
+
+from mentor_redactor import sanitize_name, sanitize_content
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
@@ -34,6 +42,10 @@ DEFAULT_WEIGHTS = {
 
 def _get_collection():
     os.makedirs(PALACE_PATH, exist_ok=True)
+    try:
+        os.chmod(PALACE_PATH, 0o700)
+    except (OSError, NotImplementedError):
+        pass
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
         return client.get_collection(COLLECTION_NAME)
@@ -101,9 +113,13 @@ def _store_signal(signal):
     if signal.get("coaching_hint"):
         doc += " " + signal["coaching_hint"]
 
+    wing = sanitize_name("cmux_mentor", "wing")
+    room = sanitize_name(weakest, "room")
+    doc = sanitize_content(doc)
+
     meta = {
-        "wing": "cmux_mentor",
-        "room": weakest,
+        "wing": wing,
+        "room": room,
         "signal_id": signal["signal_id"],
         "ts": signal["ts"],
         "fit_score": signal["fit_score"],

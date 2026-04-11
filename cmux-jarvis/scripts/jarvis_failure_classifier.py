@@ -14,7 +14,13 @@ import os
 import sys
 from pathlib import Path
 
-os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+import logging
+import platform
+
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
+if platform.machine() == "arm64" and platform.system() == "Darwin":
+    os.environ.setdefault("ORT_DISABLE_COREML", "1")
+
 import chromadb
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
@@ -37,6 +43,10 @@ RECOMMENDATIONS = {
 
 def _get_collection():
     os.makedirs(PALACE_PATH, exist_ok=True)
+    try:
+        os.chmod(PALACE_PATH, 0o700)
+    except (OSError, NotImplementedError):
+        pass
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
         return client.get_collection(COLLECTION_NAME)

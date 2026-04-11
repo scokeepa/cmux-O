@@ -21,6 +21,39 @@ REDACTION_PATTERNS = [
 ]
 
 
+# ── Input sanitization (mempalace/config.py:22-57 동일 패턴) ──────────
+
+MAX_NAME_LENGTH = 128
+_SAFE_NAME_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_ .'-]{0,126}[a-zA-Z0-9]?$")
+
+
+def sanitize_name(value, field_name="name"):
+    """Validate wing/room/entity name. Blocks path traversal, null bytes, long strings."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{field_name} must be a non-empty string")
+    value = value.strip()
+    if len(value) > MAX_NAME_LENGTH:
+        raise ValueError(f"{field_name} exceeds maximum length of {MAX_NAME_LENGTH} characters")
+    if ".." in value or "/" in value or "\\" in value:
+        raise ValueError(f"{field_name} contains invalid path characters")
+    if "\x00" in value:
+        raise ValueError(f"{field_name} contains null bytes")
+    if not _SAFE_NAME_RE.match(value):
+        raise ValueError(f"{field_name} contains invalid characters")
+    return value
+
+
+def sanitize_content(value, max_length=100_000):
+    """Validate drawer/signal content length."""
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("content must be a non-empty string")
+    if len(value) > max_length:
+        raise ValueError(f"content exceeds maximum length of {max_length} characters")
+    if "\x00" in value:
+        raise ValueError("content contains null bytes")
+    return value
+
+
 def redact(text):
     """Apply all redaction patterns to text. File paths are preserved."""
     for pattern, replacement in REDACTION_PATTERNS:

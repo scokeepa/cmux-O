@@ -159,9 +159,6 @@ else
   fi
 fi
 
-# ChromaDB telemetry 비활성화 (posthog warning 제거)
-export ANONYMIZED_TELEMETRY=False
-
 # Claude Code 확인 (경고만)
 if ! command -v claude >/dev/null 2>&1; then
   echo "  ⚠ Claude Code CLI를 찾을 수 없습니다 (설치 후 사용 가능)"

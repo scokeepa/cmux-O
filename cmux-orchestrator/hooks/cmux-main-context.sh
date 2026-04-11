@@ -88,7 +88,11 @@ try:
         if os.path.exists(identity_file):
             l0 = open(identity_file).read().strip()
 
-        os.environ.setdefault('ANONYMIZED_TELEMETRY', 'False')
+        import logging as _lg
+        _lg.getLogger('chromadb.telemetry.product.posthog').setLevel(_lg.CRITICAL)
+        import platform as _pf
+        if _pf.machine() == 'arm64' and _pf.system() == 'Darwin':
+            os.environ.setdefault('ORT_DISABLE_COREML', '1')
         import chromadb as _cdb
         _client = _cdb.PersistentClient(path=palace_path)
         try:
