@@ -570,7 +570,7 @@ cmux-orchestrator-watcher-pack/           216 files
 
 ## Referenced Open Source
 
-This project incorporates patterns and techniques from the following MIT-licensed repositories:
+This project incorporates patterns and techniques from the following open source repositories:
 
 | Repository | License | What we adopted | Where applied |
 |-----------|---------|----------------|---------------|
@@ -586,6 +586,18 @@ This project incorporates patterns and techniques from the following MIT-license
 | [scokeepa/mempalace](https://github.com/scokeepa/mempalace) (feat/backup-export-import-v2) | MIT | Export/import JSON format with dedup + version validation | `jarvis_palace_memory.py` `cmd_export()` / `cmd_import()` |
 | | | `_validate_backup()` SQLite `PRAGMA integrity_check` pattern | `jarvis_palace_memory.py` `cmd_backup()` |
 | | | Timestamped backup + retention policy | `jarvis_palace_memory.py` `cmd_backup()` |
+| [fivetaku/vibe-sunsang](https://github.com/fivetaku/vibe-sunsang) | No license | 6축 스킬 모델 (DECOMP/VERIFY/ORCH/FAIL/CTX/META) — growth-analyst.md 원본 | `jarvis_mentor_signal.py` 6-axis scoring engine |
+| | | Harness Level 체계 (L1~L7) + Fit Score 가중평균 공식 | `jarvis_mentor_signal.py` `compute_fit_score()`, `compute_harness_level()` |
+| | | Antipattern 탐지 카탈로그 (fix_me_syndrome, context_skip, verification_skip 등) | `jarvis_mentor_signal.py` `detect_antipatterns()` |
+| | | Gate 조건 (L3~L7 승급 기준) | `jarvis_mentor_report.py` `GATE_CONDITIONS` |
+| | | Coaching hint 생성 패턴 (antipattern → 1-line 코칭) | `jarvis_mentor_signal.py` `generate_coaching_hint()` |
+| | | Weekly growth report 구조 (6축 테이블 + 트렌드 + 안티패턴 요약) | `jarvis_mentor_report.py` `generate_report()` |
+| [GitFrog1111/badclaude](https://github.com/GitFrog1111/badclaude) | No license | Interrupt + follow-up prompt 패턴 → session-scoped nudge 정책으로 재해석 | `jarvis_nudge.py` L1 nudge system |
+| | | "채찍질" 컨셉 — 메모리가 아닌 행동 교정 도구로 역할 분리 | `jarvis_nudge.py` (memory ≠ nudge 경계) |
+| | | Cooldown/throttle 패턴 (반복 자극 방지) | `jarvis_nudge.py` `COOLDOWN_SECONDS`, `_check_cooldown()` |
+| | | Audit trail (재촉 기록 보존) | `jarvis_nudge.py` `_store_nudge_audit()` → ChromaDB cmux_nudge wing |
+
+> **Note:** `vibe-sunsang`과 `badclaude`는 라이선스가 명시되어 있지 않습니다. 코드를 직접 복사하지 않고, 개념/패턴/구조를 참조하여 독자적으로 재구현했습니다.
 
 ---
 
