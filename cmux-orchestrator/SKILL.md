@@ -140,10 +140,21 @@ sleep 3
 ```bash
 cmux set-buffer --name task_dept -- "TASK: [작업 내용]
 
-[팀장 프로토콜 — 반드시 따를 것]
-1. 먼저 수정 대상 파일 수 + 복잡도를 분석해.
-2. 분석 결과와 실행 계획을 먼저 출력해.
-3. 팀원이 필요하면:
+[팀장 플랜 수립 절차 — 반드시 따를 것]
+
+Phase 1: 검증 (작업 착수 전 — 바로 코딩하지 말 것)
+- 수정 대상 파일 수 + 복잡도 분석
+- 기존 코드 구조와 충돌 여부 확인 (관련 파일 먼저 읽기)
+- 파일 스코프 겹침 없는지 검증
+- 분석 결과를 먼저 출력해
+
+Phase 2: 고도화 (실행 계획 수립)
+- 팀원 필요 여부 판단 + 난이도별 AI 배정 결정
+- 각 팀원에게 배정할 작업 범위 확정 (파일 스코프 겹침 금지)
+- 실행 계획을 출력해
+
+Phase 3: 실행 + 검증
+- 팀원이 필요하면:
    a. cmux new-split right 로 현재 사이드바 탭 안에 pane 생성
    b. 새 pane에서 난이도별 로컬 AI 시작:
       - 어려운 작업: codex (설치 확인: command -v codex)
@@ -152,9 +163,10 @@ cmux set-buffer --name task_dept -- "TASK: [작업 내용]
       - 쉬운 작업: claude --model haiku --dangerously-skip-permissions
    c. AI 로딩 대기 후 cmux send --surface surface:N 으로 작업 전달
    d. cmux send-key --surface surface:N Enter
-   e. cmux read-screen으로 팀원 DONE 확인 후 결과 취합
-4. 팀원 불필요하면 직접 수행.
-5. 완료 후: DONE: 요약 (수정한 파일 절대경로 포함)
+   e. cmux read-screen으로 팀원 DONE 확인 후 실제 결과물 검증
+   f. 껍데기/stub 감지 시 DONE 거부 → 재작업 지시
+- 팀원 불필요하면 직접 수행.
+- 취합 후: DONE: 요약 (수정한 파일 절대경로 포함)
 
 프로젝트 경로: [워크트리 경로 또는 메인 프로젝트 경로]
 git commit 금지 (Main만 수행).
