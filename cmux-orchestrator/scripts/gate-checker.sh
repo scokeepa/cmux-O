@@ -103,6 +103,39 @@ function_check_gate7() {
   fi
 }
 
+# ── LECEIPTS: 5-섹션 보고서 검증 ──────────────────────────────────────
+function_check_leceipts() {
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "LECEIPTS: 5-섹션 보고서 검증"
+
+  if [ ! -f "/tmp/cmux-orch-enabled" ]; then
+    function_color_echo "$variable_color_yellow" "  ⏭ LECEIPTS SKIP: 오케스트레이션 비활성"
+    return
+  fi
+
+  local variable_checker="${variable_skill_dir}/scripts/leceipts-checker.py"
+  if [ ! -f "$variable_checker" ]; then
+    function_color_echo "$variable_color_red" "  ⛔ LECEIPTS FAIL: leceipts-checker.py not found"
+    variable_failed_gates+=("LECEIPTS")
+    variable_all_passed=0
+    return
+  fi
+
+  local variable_checker_output
+  local variable_checker_exit
+
+  variable_checker_output=$(python3 "$variable_checker" 2>&1)
+  variable_checker_exit=$?
+
+  if [ "$variable_checker_exit" -eq 0 ]; then
+    function_color_echo "$variable_color_green" "  ✅ LECEIPTS PASS: 5-섹션 보고서 검증 통과"
+  else
+    function_color_echo "$variable_color_red" "  ⛔ LECEIPTS FAIL: $variable_checker_output"
+    variable_failed_gates+=("LECEIPTS")
+    variable_all_passed=0
+  fi
+}
+
 # ── 메인 실행 ─────────────────────────────────────────────────────────
 echo "╔══════════════════════════════════════════╗"
 echo "║         GATE CHECKER — ALL GATES          ║"
@@ -111,6 +144,7 @@ echo "╚═══════════════════════�
 function_check_gate1
 function_check_gate5
 function_check_gate7
+function_check_leceipts
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 

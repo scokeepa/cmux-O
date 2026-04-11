@@ -15,6 +15,8 @@
 | W-8 | Watcher scan cycle mandatory | watcher-scan.py | (automatic) | Auto |
 | W-9 | Watcher never intervenes on workers | (SKILL.md policy) | - | L3 Policy |
 | W-10 | IDLE surface -> remind Main to assign | watcher-scan.py | (automatic) | Auto |
+| LECEIPTS | 5-section report before commit | cmux-leceipts-gate.py | PreToolUse:Bash | L0 BLOCK |
+| PLAN-QG | 5관점 순환검증 + 시뮬레이션 before ExitPlanMode | cmux-plan-quality-gate.py | PreToolUse:ExitPlanMode | L0 BLOCK |
 
 ## Level Legend
 

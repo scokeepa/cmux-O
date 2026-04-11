@@ -29,8 +29,14 @@ except Exception:
     print('')
 " 2>/dev/null || echo "")
 
-# git commit만 감지 — 다른 모든 명령은 즉시 통과
-echo "$variable_command" | grep -qE "^git commit|&&\s*git commit" || exit 0
+# git commit만 감지 — 공통 함수 사용 (값 인자 받는 git global option 대응)
+variable_is_commit=$(python3 -c "
+import sys
+sys.path.insert(0, '$HOME/.claude/skills/cmux-orchestrator/scripts')
+from leceipts_validator import is_git_commit
+print('yes' if is_git_commit('''$variable_command''') else 'no')
+" 2>/dev/null)
+[ "$variable_is_commit" = "yes" ] || exit 0
 
 # === GATE 0: 디스패치 미수집 시 커밋 차단 ===
 variable_dispatch_file="/tmp/cmux-dispatch-registry.json"

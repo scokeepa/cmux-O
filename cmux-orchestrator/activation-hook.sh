@@ -99,7 +99,9 @@ HOOK_MAP = {
     "cmux-watcher-session.sh": ("SessionStart", None, 5),
     "cmux-watcher-activate.sh": ("UserPromptSubmit", None, 120),
     "cmux-control-tower-guard.py": ("PreToolUse", "Bash", 3),
+    "cmux-leceipts-gate.py": ("PreToolUse", "Bash", 3),
     "cmux-memory-recorder.sh": ("PostToolUse", "Bash", 3),
+    "cmux-plan-quality-gate.py": ("PreToolUse", "ExitPlanMode", 5),
 }
 
 def _hook_exists_in_group(match_pattern, group):
@@ -175,8 +177,8 @@ if added > 0 or updated > 0:
 PYEOF
 fi
 
-# 오케스트레이션 모드 활성화
-touch /tmp/cmux-orch-enabled
+# 오케스트레이션 모드 활성화는 /cmux-start에서만 수행 (cmux-start/SKILL.md:202)
+# activation-hook에서 touch하면 스킬 로드만으로 훅이 활성화되는 불변식 위반 (레드팀 Finding 1)
 
 # 설치 완료 플래그
 touch "$INSTALL_FLAG"

@@ -18,9 +18,11 @@ import time
 
 sys.path.insert(0, os.path.expanduser("~/.claude/skills/cmux-orchestrator/scripts"))
 from cmux_utils import is_main_surface
+from leceipts_validator import is_git_commit
 
 VERIFY_FLAG = "/tmp/cmux-verification-passed"
 MAX_AGE = 300  # 5분 이내 검증만 유효
+
 
 def main():
     if not os.path.exists("/tmp/cmux-orch-enabled"):
@@ -43,8 +45,8 @@ def main():
 
     command = inp.get("tool_input", {}).get("command", "")
 
-    # git commit 감지
-    if "git commit" not in command:
+    # git commit 감지 — shlex 토큰 분석
+    if not is_git_commit(command):
         print(json.dumps({"decision": "approve"}))
         return
 

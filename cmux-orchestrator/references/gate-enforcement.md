@@ -134,6 +134,8 @@ python3 ${SKILL_DIR}/scripts/speckit-tracker.py --gate
 □ GATE 7: 2+ surface 배정 시 워크트리 사용 확인 (git worktree list)
 □ GATE 7b: 병합 완료 + 워크트리 정리 완료 (git worktree list에 /tmp/wt-* 0개)
 □ 서브에이전트 리뷰 결과 수신 + REJECT 항목 수정
+□ LECEIPTS: 5-섹션 보고서 작성 완료 (/tmp/cmux-leceipts-report.json)
+□ LECEIPTS: verification 섹션에 실제 실행 결과 포함
 □ 커밋 실행
 하나라도 □(미체크)이면 → ⛔ 라운드 종료 금지.
 ```

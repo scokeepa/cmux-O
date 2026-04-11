@@ -11,7 +11,14 @@ LOG_FILE="/tmp/cmux-watcher.log"
 STATE_FILE="/tmp/cmux-watcher-state.json"
 WATCHDOG_PID_FILE="/tmp/cmux-watcher-watchdog.pid"
 
-# Watcher role marker
+# Guard: 오케스트레이션 비활성이면 완전 no-op (role marker 포함 전부 스킵)
+# 오케스트레이션 모드 활성화는 /cmux-start에서만 수행 (cmux-start/SKILL.md:202)
+if [ ! -f "/tmp/cmux-orch-enabled" ]; then
+    echo "[cmux-watcher] 오케스트레이션 비활성 → watchdog 스킵"
+    exit 0
+fi
+
+# Watcher role marker (guard 통과 후에만 실행)
 if command -v cmux >/dev/null 2>&1; then
     WATCHER_SID=$(cmux identify 2>/dev/null | python3 -c "
 import json,sys
@@ -25,9 +32,6 @@ except: pass
         echo "[cmux-watcher] Role marker: surface:${WATCHER_SID} = watcher"
     fi
 fi
-
-# 오케스트레이션 모드 활성화
-touch /tmp/cmux-orch-enabled
 
 # 이전 프로세스 전부 정리
 pkill -f "watcher-scan.py.*--continuous" 2>/dev/null || true

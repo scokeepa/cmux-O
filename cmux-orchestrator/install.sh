@@ -162,6 +162,12 @@ HOOK_MAP = {
     "cmux-watcher-session.sh": ("SessionStart", None, 5),
     # Watcher hooks
     "cmux-watcher-activate.sh": ("UserPromptSubmit", None, 5),
+    # GATE 7 + LECEIPTS + Memory
+    "cmux-control-tower-guard.py": ("PreToolUse", "Bash", 3),
+    "cmux-leceipts-gate.py": ("PreToolUse", "Bash", 3),
+    "cmux-memory-recorder.sh": ("PostToolUse", "Bash", 3),
+    # Plan Quality Gate
+    "cmux-plan-quality-gate.py": ("PreToolUse", "ExitPlanMode", 5),
 }
 
 added = 0

@@ -27,6 +27,7 @@ import time
 
 sys.path.insert(0, os.path.expanduser("~/.claude/skills/cmux-orchestrator/scripts"))
 from cmux_utils import write_json_atomic, is_main_surface
+from leceipts_validator import is_git_commit
 
 STATE_FILE = "/tmp/cmux-workflow-state.json"
 SURFACE_MAP_FILE = "/tmp/cmux-surface-map.json"
@@ -93,8 +94,8 @@ def detect_action(command, tool_name, tool_input):
     if "capture-pane" in command:
         return "COLLECT"
 
-    # Commit
-    if "git commit" in command:
+    # Commit — 공통 함수로 정확히 git commit 서브커맨드만 감지
+    if is_git_commit(command):
         return "COMMIT"
 
     # Reset: session init
