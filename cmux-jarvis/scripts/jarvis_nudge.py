@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """jarvis_nudge.py — L1 텍스트 재촉 + audit event 기록.
 
-SSOT: docs/jarvis/architecture/nudge-escalation-policy.md
+SSOT: docs/02-jarvis/nudge-escalation.md
 현재 구현: L1만. L2/L3는 보류.
 
 Usage:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """jarvis_palace_memory.py — L0/L1 context 생성 + 저장소 현황.
 
-SSOT: docs/jarvis/architecture/palace-memory-ssot.md
+SSOT: docs/02-jarvis/palace-memory.md
 Token budget: L0+L1 합산 600-900 token (mentor-lane.md)
 
 Usage:

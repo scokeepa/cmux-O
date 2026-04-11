@@ -2,7 +2,7 @@
 """jarvis_failure_classifier.py — 반복 실패 원인 분류기.
 
 SSOT: docs/CMUX-AGI-MENTOR-INTEGRATED-PLAN.md P6
-정책: docs/jarvis/architecture/mentor-lane.md (Evolution vs Mentor 경계)
+정책: docs/02-jarvis/mentor-lane.md (Evolution vs Mentor 경계)
 
 분류만 수행. config 변경은 Evolution Lane + Iron Law #1 승인을 통과해야 한다.
 

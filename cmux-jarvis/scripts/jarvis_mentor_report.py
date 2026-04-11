@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """jarvis_mentor_report.py — AI 협업 하네스 개선 리포트 생성기.
 
-SSOT: docs/jarvis/architecture/mentor-lane.md (트리거, 표본 부족 보류)
-Schema: docs/jarvis/architecture/mentor-ontology.md (6축, Fit Score, Gate)
-Privacy: docs/jarvis/architecture/mentor-privacy-policy.md (raw quote 최소화)
+SSOT: docs/02-jarvis/mentor-lane.md (트리거, 표본 부족 보류)
+Schema: docs/02-jarvis/mentor-ontology.md (6축, Fit Score, Gate)
+Privacy: docs/02-jarvis/privacy-policy.md (raw quote 최소화)
 
 Usage:
     python3 jarvis_mentor_report.py generate [--since YYYY-MM-DD]

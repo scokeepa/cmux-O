@@ -1,0 +1,313 @@
+---
+name: vibe-sunsang-onboard
+description: 바선생 초기 설정 — 워크스페이스 생성, 프로젝트 연결, 유형 분류, 첫 변환까지 안내합니다. "바선생 시작", "온보딩", "초기 설정", "init", "초기화", "셋업", "setup" 같은 요청에 사용됩니다.
+---
+
+## 바선생 온보딩
+
+### Step 0: 사용자 데이터 디렉토리 준비
+
+`"$HOME/vibe-sunsang/"` 디렉토리가 있는지 확인합니다.
+
+**이미 존재하는 경우 (재온보딩):**
+> "이전에 설정한 바선생 데이터가 있습니다. 기존 설정을 유지하면서 새 프로젝트만 추가할까요, 아니면 처음부터 다시 설정할까요?"
+
+**EXECUTE:** 아래 JSON으로 AskUserQuestion 도구를 즉시 호출한다:
+
+```json
+{
+  "questions": [{
+    "question": "이전에 설정한 바선생 데이터가 있습니다. 어떻게 할까요?",
+    "header": "재설정",
+    "options": [
+      {"label": "새 프로젝트만 추가", "description": "기존 설정을 유지하면서 새 프로젝트만 추가해요"},
+      {"label": "처음부터 다시", "description": "기존 설정을 백업하고 새로 시작해요"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+선택에 따라:
+- "새 프로젝트만 추가" → 기존 config 파일을 읽어 매핑된 프로젝트를 건너뛰고 새 프로젝트만 진행
+- "처음부터 다시" → 기존 config 파일을 백업(`*.bak`) 후 새로 생성
+
+**존재하지 않는 경우:**
+
+```bash
+mkdir -p "$HOME/vibe-sunsang/config" "$HOME/vibe-sunsang/conversations" "$HOME/vibe-sunsang/exports" "$HOME/vibe-sunsang/growth-log/weekly"
+```
+
+### Step 0.5: 워크스페이스 환경 구성
+
+**마이그레이션 감지:** `$HOME/vibe-sunsang/` 안에 번호 접두사 디렉토리(`10-`, `20-`, `30-`, `40-`, `90-` 등)가 존재하면 v1.3.x 이전 구조로 판단하고, 사용자에게 안내한다:
+
+> "이전 버전의 폴더 구조가 감지되었습니다. 플러그인이 업데이트되어 더 이상 워크스페이스에 로컬 명령/스킬 파일이 필요하지 않습니다. 기존 데이터는 그대로 유지되며, 새 구조로 자동 전환됩니다."
+
+마이그레이션이 필요한 경우:
+- `40-conversations/` → `conversations/` (기존 conversations/가 비어있으면 이동, 아니면 병합)
+- `90-exports/` → `exports/` (동일)
+- `30-growth-log/` → `growth-log/` (동일)
+- `.claude/`, `10-scripts/`, `20-knowledge-base/`, `00-system/` → 삭제 안내 (사용자 확인 후)
+
+**CLAUDE.md 생성:**
+
+`$HOME/vibe-sunsang/CLAUDE.md`가 없으면:
+1. `${CLAUDE_PLUGIN_ROOT}/references/CLAUDE-MD-TEMPLATE.md`의 내용을 읽는다
+2. `$HOME/vibe-sunsang/CLAUDE.md`에 Write로 저장한다
+
+이미 있으면:
+> "기존 CLAUDE.md를 유지합니다."
+
+**.gitignore 생성:**
+
+`$HOME/vibe-sunsang/.gitignore`가 없으면 생성:
+
+```
+# Large conversation files
+conversations/**/*.md
+!conversations/INDEX.md
+```
+
+이미 있으면 건너뛴다.
+
+**git init:**
+
+`$HOME/vibe-sunsang/.git`이 없으면:
+```bash
+cd "$HOME/vibe-sunsang" && git init
+```
+
+이미 있으면 건너뛴다.
+
+### Gotchas
+
+- CLAUDE-MD-TEMPLATE.md를 인라인으로 하드코딩하지 않는다. 반드시 `${CLAUDE_PLUGIN_ROOT}/references/CLAUDE-MD-TEMPLATE.md`에서 읽는다.
+- 마이그레이션 시 기존 데이터가 있는 디렉토리를 덮어쓰지 않도록 주의한다. 충돌 시 사용자에게 확인받는다.
+- git init은 사용자 워크스페이스에서만 실행한다. 플러그인 디렉토리에서 실행하지 않는다.
+
+### Step 1: 환영 & 설명
+
+다음 메시지를 사용자에게 보여줍니다:
+
+---
+
+**바선생에 오신 것을 환영합니다!**
+
+바선생은 Claude Code와 나눈 대화를 돌아보고, **AI와 더 잘 협업하는 법**을 배우게 해주는 AI 멘토 에이전트입니다.
+
+매주 한 번 여기서 이번 주 대화를 리뷰하면:
+- 내가 어떤 실수를 반복하고 있는지
+- AI에게 어떻게 요청하면 더 효과적인지
+- 어떤 개념을 모르고 넘어갔는지
+
+를 발견할 수 있습니다.
+
+지금부터 초기 설정을 진행하겠습니다.
+
+---
+
+### Step 2: Claude Code 세션 확인
+
+`"$HOME/.claude/projects/"` 디렉토리를 확인하여 사용 가능한 프로젝트 목록을 가져옵니다.
+
+```bash
+ls "$HOME/.claude/projects/"
+```
+
+프로젝트가 없으면:
+> "아직 Claude Code 대화 기록이 없습니다. 먼저 다른 프로젝트에서 Claude Code를 사용한 후 다시 와주세요."
+> → 여기서 종료
+
+프로젝트가 있으면 다음 단계로 진행합니다.
+
+### Step 3: 프로젝트 이름 매핑
+
+발견된 프로젝트 디렉토리 목록을 보여주고, 사용자에게 읽기 좋은 이름을 지정하도록 안내합니다.
+
+**안내 메시지:**
+
+> Claude Code가 저장한 프로젝트들을 발견했습니다.
+> 각 프로젝트에 알아보기 쉬운 이름을 붙여주세요.
+>
+> 디렉토리 이름이 복잡해 보여도 걱정하지 마세요 - 실제 프로젝트 폴더 경로입니다.
+
+각 프로젝트 디렉토리에 대해:
+1. 디렉토리명에서 프로젝트명을 추측합니다 (경로의 마지막 의미 있는 부분 추출)
+2. **EXECUTE:** 아래 JSON으로 AskUserQuestion 도구를 즉시 호출한다 (프로젝트별로 반복):
+
+```json
+{
+  "questions": [{
+    "question": "이 프로젝트(`-Users-xxx-my-project`)의 이름을 뭐라고 할까요?",
+    "header": "프로젝트명",
+    "options": [
+      {"label": "{추측한 이름}", "description": "디렉토리 경로에서 추측한 이름이에요"},
+      {"label": "다른 이름", "description": "Other에 원하는 이름을 입력해주세요"},
+      {"label": "건너뛰기", "description": "이 프로젝트는 분석하지 않아요"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+> question과 첫 번째 옵션의 label은 각 프로젝트에 맞게 동적 생성한다.
+
+**규칙:**
+- 한 번에 5개까지만 질문합니다 (너무 많으면 피로)
+- 프로젝트가 5개를 초과하면 5개씩 나눠서 반복합니다. 각 묶음 후 "더 진행할까요?"를 확인합니다.
+- 세션이 5개 미만인 프로젝트는 자동으로 건너뜁니다 (사용자에게 알림)
+- "건너뛰기"를 선택한 프로젝트는 매핑에서 제외
+- **재온보딩 시**: 이미 매핑된 프로젝트는 건너뛰고 새 프로젝트만 질문
+
+결과를 `"$HOME/vibe-sunsang/config/project_names.json"`에 저장합니다.
+
+### Step 4: 워크스페이스 유형 분류
+
+**각 프로젝트의 CLAUDE.md 또는 README.md를 읽어서 유형을 추론합니다.**
+
+분류 흐름:
+1. 프로젝트 경로에서 `CLAUDE.md` 또는 `README.md`를 찾아 읽기
+2. 내용을 기반으로 유형을 추론
+3. 사용자에게 추론 결과를 보여주고 확인받기
+
+**유형 분류 기준:**
+
+| 유형 | 키워드/패턴 | 설명 |
+|------|------------|------|
+| **Builder** (구현자) | build, test, deploy, component, API, 코딩, 개발, 앱 | 코딩/개발 프로젝트 |
+| **Explorer** (탐험자) | research, study, analyze, 리서치, 학습, 스터디, Q&A, 질문 | 리서치/Q&A/학습 |
+| **Designer** (기획자) | plan, design, ideation, 기획, 아이디어, 콘텐츠, 글쓰기 | 기획/아이디에이션 |
+| **Operator** (운영자) | automate, workflow, schedule, 자동화, 연동, 스크립트, MCP | 업무 자동화 |
+
+**CLAUDE.md/README를 찾을 수 없는 경우:**
+- 해당 프로젝트의 파일 구조를 간단히 확인 (`.py`, `.js` 파일이 많으면 Builder 등)
+- 추론이 어려우면 사용자에게 직접 질문
+
+각 프로젝트에 대해 **EXECUTE:** 아래 JSON으로 AskUserQuestion 도구를 즉시 호출한다:
+
+```json
+{
+  "questions": [{
+    "question": "[프로젝트명]의 CLAUDE.md를 분석해보니 [유형] 워크스페이스로 보입니다. 맞나요?",
+    "header": "유형 확인",
+    "options": [
+      {"label": "Builder (코딩)", "description": "코딩/개발 프로젝트"},
+      {"label": "Explorer (리서치/학습)", "description": "리서치/Q&A/스터디"},
+      {"label": "Designer (기획)", "description": "기획/아이디에이션"},
+      {"label": "Operator (자동화)", "description": "업무 자동화/데이터처리"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+> question은 각 프로젝트의 이름과 추론된 유형으로 동적 생성한다.
+
+**규칙:**
+- 프로젝트가 여러 목적이면 주된 목적 1개를 선택
+- 같은 유형이 여러 프로젝트에 반복되면 묶어서 한 번에 확인
+
+결과를 `"$HOME/vibe-sunsang/config/workspace_types.json"`에 저장:
+
+```json
+{
+  "schema_version": 1,
+  "type_definitions": {
+    "builder": "코딩/개발",
+    "explorer": "리서치/Q&A/스터디",
+    "designer": "기획/아이디에이션",
+    "operator": "자동화/데이터처리"
+  },
+  "default_type": "builder",
+  "workspaces": {
+    "-Users-xxx-my-app": {
+      "type": "builder",
+      "name": "my-app",
+      "detected_from": "CLAUDE.md",
+      "confirmed": true
+    }
+  }
+}
+```
+
+### Step 5: 첫 변환 실행
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/scripts/convert_sessions.py --force --names-file "$HOME/vibe-sunsang/config/project_names.json" --output-dir "$HOME/vibe-sunsang/conversations" 2>/dev/null || python ${CLAUDE_PLUGIN_ROOT}/scripts/convert_sessions.py --force --names-file "$HOME/vibe-sunsang/config/project_names.json" --output-dir "$HOME/vibe-sunsang/conversations"
+```
+
+변환 진행 상황을 보여주고, 완료되면 결과를 요약합니다:
+- 총 프로젝트 수
+- 총 세션 수
+- 가장 활발한 프로젝트 TOP 3
+- **유형별 분포** (Builder N개, Explorer N개, ...)
+
+### Step 6: 사용법 안내
+
+---
+
+**설정 완료!**
+
+프로젝트 유형별로 맞춤 분석을 받을 수 있습니다:
+
+| 유형 | 분석 내용 |
+|------|----------|
+| Builder (구현자) | 코딩 요청 품질, 에러 대응, 코드 이해도 |
+| Explorer (탐험자) | 질문 깊이, 출처 검증, 비판적 사고 |
+| Designer (기획자) | 기획 구체성, 구조화, 실현 가능성 |
+| Operator (운영자) | 자동화 품질, 에러 처리, 재사용성 |
+
+**v2 레벨 시스템:**
+
+바선생은 6가지 기술 차원으로 AI 활용 능력을 분석합니다:
+
+| 기술 차원 | 쉬운 설명 |
+|----------|----------|
+| DECOMP (작업 분해) | 큰 요청을 작은 단계로 나누는 능력 |
+| VERIFY (검증 전략) | AI 결과를 확인하고 검증하는 능력 |
+| ORCH (오케스트레이션) | 여러 도구를 조합하여 활용하는 능력 |
+| FAIL (실패 대응) | 오류가 나면 원인을 파악하고 대처하는 능력 |
+| CTX (맥락 관리) | AI에게 필요한 정보를 잘 전달하는 능력 |
+| META (메타인지) | 내가 AI를 어떻게 쓰는지 돌아보는 능력 |
+
+레벨은 L1.0(입문)부터 L7.0(마스터)까지, 0.5 단위로 세밀하게 측정됩니다. 유형마다 중요한 축이 달라서, 나에게 맞는 맞춤 분석을 받을 수 있어요.
+
+사용할 수 있는 기능:
+
+| 명령 | 설명 |
+|------|------|
+| `/vibe-sunsang 변환` | 새 대화 변환 (매주 실행 권장) |
+| `/vibe-sunsang 멘토링` | AI 활용 능력 코칭 (유형별 6축 맞춤) |
+| `/vibe-sunsang 성장` | 성장 분석 리포트 (6축 레이더 차트 포함) |
+
+**추천 루틴:**
+1. 매주 금요일, `/vibe-sunsang 변환` 으로 이번 주 대화 변환
+2. "멘토링해줘" 로 이번 주 리뷰
+3. 행동 계획 실천
+
+---
+
+### Step 7: 바로 시작할지 물어보기
+
+**EXECUTE:** 아래 JSON으로 AskUserQuestion 도구를 즉시 호출한다:
+
+```json
+{
+  "questions": [{
+    "question": "바로 이번 주 리뷰를 시작해볼까요?",
+    "header": "다음 단계",
+    "options": [
+      {"label": "멘토링 시작", "description": "AI 활용 능력 코칭 세션을 바로 시작해요 (6축 분석)"},
+      {"label": "성장 리포트 생성", "description": "성장 분석 리포트를 자동 생성해요 (6축 레이더 차트 포함)"},
+      {"label": "나중에 할게요", "description": "여기서 마무리할게요"}
+    ],
+    "multiSelect": false
+  }]
+}
+```
+
+선택에 따라:
+- "멘토링 시작" → vibe-sunsang-mentor 스킬 실행
+- "성장 리포트 생성" → vibe-sunsang-growth 스킬 실행
+- "나중에 할게요" → 종료

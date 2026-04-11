@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """mentor_redactor.py — signal/drawer 저장 전 민감 정보 자동 redaction.
 
-SSOT: docs/jarvis/architecture/mentor-privacy-policy.md
+SSOT: docs/02-jarvis/privacy-policy.md
 
 Usage:
     python3 mentor_redactor.py --text "password=secret123 and sk-abc..."

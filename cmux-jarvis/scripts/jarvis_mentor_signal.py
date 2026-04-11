@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """jarvis_mentor_signal.py — Mentor Lane 6축 signal engine.
 
-SSOT: docs/jarvis/architecture/palace-memory-ssot.md
-Schema: docs/jarvis/architecture/mentor-ontology.md
+SSOT: docs/02-jarvis/palace-memory.md
+Schema: docs/02-jarvis/mentor-ontology.md
 
 Usage:
     python3 jarvis_mentor_signal.py emit --event '{"type":"...","data":{...}}'
