@@ -151,6 +151,58 @@ knowledge graph triple:
 
 각 저장소는 독립적이다. 하나의 `memories.json`에 합치지 않는다.
 
+## Export / Import / Backup
+
+### Export
+
+mentor 데이터를 단일 JSON 파일로 내보낸다.
+
+```bash
+python3 jarvis_palace_memory.py export --output /path/to/export.json
+```
+
+포맷:
+```json
+{
+  "format": "cmux_mentor_export",
+  "version": 1,
+  "exported_at": "ISO-8601",
+  "signals": [...],
+  "nudge_audit": [...],
+  "l0": "L0 텍스트",
+  "l1": "L1 텍스트"
+}
+```
+
+JSONL 텍스트 기반이므로 embedding은 포함하지 않으며, 재생성도 불필요하다.
+
+### Import
+
+```bash
+python3 jarvis_palace_memory.py import --input /path/to/export.json
+```
+
+- **format/version 검증**: `cmux_mentor_export` + version ≤ 1만 허용. 미래 버전은 거부 (forward-compat rejection)
+- **signal dedup**: `signal_id` 기반. 이미 존재하면 skip (기본값). `--no-skip-existing` 플래그로 비활성화 가능
+- **nudge audit**: append-only 로그이므로 dedup 없이 추가
+- **L0/L1**: 기존 파일이 없을 때만 복원
+
+### Backup
+
+```bash
+python3 jarvis_palace_memory.py backup [--max-backups 5]
+```
+
+- `~/.claude/cmux-jarvis/mentor/` → `mentor-backup-YYYYMMDD-HHMMSS/` 복사
+- 무결성 검증: 백업 내 모든 JSONL 파일의 각 행을 JSON parse
+- retention: `--max-backups N`으로 오래된 백업 자동 정리 (기본 5)
+
+### Embedding 정책
+
+cmux palace memory는 ChromaDB가 아닌 JSONL/SQLite FTS5 기반이다. embedding이 없으므로:
+- export/import 시 embedding 포함/재생성 이슈가 없다
+- 검색은 텍스트 기반 (Phase 3+ SQLite FTS5)
+
 ## ChromaDB/MCP Adapter 경계
 
 - Phase 1~2: JSONL + SQLite FTS5만 사용

@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "cmux-jarvis", "scripts"))
 import jarvis_palace_memory as pm
@@ -102,6 +103,124 @@ def test_l1_calibration_warning():
     print("  test_l1_calibration_warning: PASS")
 
 
+def test_export_import_roundtrip():
+    """export → import → signal 수 일치."""
+    with tempfile.TemporaryDirectory() as td:
+        pm.MENTOR_DIR = type(pm.MENTOR_DIR)(td)
+        pm.SIGNALS_FILE = pm.MENTOR_DIR / "signals.jsonl"
+        pm.CONTEXT_DIR = pm.MENTOR_DIR / "context"
+        pm.L0_FILE = pm.CONTEXT_DIR / "L0.md"
+        pm.L1_FILE = pm.CONTEXT_DIR / "L1.md"
+        pm.NUDGE_AUDIT_FILE = pm.MENTOR_DIR / "nudge-audit.jsonl"
+
+        pm.MENTOR_DIR.mkdir(parents=True, exist_ok=True)
+        pm.CONTEXT_DIR.mkdir(parents=True, exist_ok=True)
+
+        # Write test signals
+        with open(pm.SIGNALS_FILE, "w") as f:
+            f.write(json.dumps({"signal_id": "sig-1", "scores": {"decomp": 0.7}}) + "\n")
+            f.write(json.dumps({"signal_id": "sig-2", "scores": {"decomp": 0.8}}) + "\n")
+        pm.L0_FILE.write_text("test L0", encoding="utf-8")
+
+        # Export
+        export_file = os.path.join(td, "export.json")
+        pm.cmd_export(export_file)
+
+        # Clear and import
+        pm.SIGNALS_FILE.unlink()
+        pm.cmd_import(export_file)
+
+        signals = pm._read_signals()
+        assert len(signals) == 2, f"Expected 2, got {len(signals)}"
+        assert signals[0]["signal_id"] == "sig-1"
+    print("  test_export_import_roundtrip: PASS")
+
+
+def test_import_dedup():
+    """같은 export 2회 import → signal 수 변화 없음 (Q1 해결)."""
+    with tempfile.TemporaryDirectory() as td:
+        pm.MENTOR_DIR = type(pm.MENTOR_DIR)(td)
+        pm.SIGNALS_FILE = pm.MENTOR_DIR / "signals.jsonl"
+        pm.CONTEXT_DIR = pm.MENTOR_DIR / "context"
+        pm.L0_FILE = pm.CONTEXT_DIR / "L0.md"
+        pm.L1_FILE = pm.CONTEXT_DIR / "L1.md"
+        pm.NUDGE_AUDIT_FILE = pm.MENTOR_DIR / "nudge-audit.jsonl"
+        pm.MENTOR_DIR.mkdir(parents=True, exist_ok=True)
+
+        with open(pm.SIGNALS_FILE, "w") as f:
+            f.write(json.dumps({"signal_id": "sig-1"}) + "\n")
+
+        export_data = {"format": "cmux_mentor_export", "version": 1,
+                       "signals": [{"signal_id": "sig-1"}, {"signal_id": "sig-2"}]}
+        export_file = os.path.join(td, "export.json")
+        with open(export_file, "w") as f:
+            json.dump(export_data, f)
+
+        pm.cmd_import(export_file)  # sig-1 skipped, sig-2 imported
+        pm.cmd_import(export_file)  # both skipped
+
+        signals = pm._read_signals()
+        assert len(signals) == 2, f"Expected 2, got {len(signals)}"
+    print("  test_import_dedup: PASS")
+
+
+def test_import_version_rejection():
+    """version > 1 → 거부."""
+    with tempfile.TemporaryDirectory() as td:
+        pm.MENTOR_DIR = type(pm.MENTOR_DIR)(td)
+        pm.SIGNALS_FILE = pm.MENTOR_DIR / "signals.jsonl"
+        pm.MENTOR_DIR.mkdir(parents=True, exist_ok=True)
+
+        future = {"format": "cmux_mentor_export", "version": 99, "signals": []}
+        export_file = os.path.join(td, "future.json")
+        with open(export_file, "w") as f:
+            json.dump(future, f)
+
+        rc = pm.cmd_import(export_file)
+        assert rc == 1, f"Expected rc=1 for future version, got {rc}"
+    print("  test_import_version_rejection: PASS")
+
+
+def test_backup_integrity():
+    """backup 후 JSONL 무결성 확인."""
+    with tempfile.TemporaryDirectory() as td:
+        pm.MENTOR_DIR = type(pm.MENTOR_DIR)(os.path.join(td, "mentor"))
+        pm.SIGNALS_FILE = pm.MENTOR_DIR / "signals.jsonl"
+        pm.CONTEXT_DIR = pm.MENTOR_DIR / "context"
+        pm.MENTOR_DIR.mkdir(parents=True, exist_ok=True)
+
+        with open(pm.SIGNALS_FILE, "w") as f:
+            f.write('{"signal_id": "sig-1"}\n')
+            f.write('{"signal_id": "sig-2"}\n')
+
+        # Patch parent to td for backup location
+        original_parent = pm.MENTOR_DIR.parent
+        rc = pm.cmd_backup(max_backups=5)
+        assert rc == 0
+        backups = list(Path(td).glob("mentor-backup-*"))
+        assert len(backups) >= 1, "No backup created"
+    print("  test_backup_integrity: PASS")
+
+
+def test_backup_retention():
+    """max_backups=2 → 오래된 것 삭제."""
+    with tempfile.TemporaryDirectory() as td:
+        mentor = Path(td) / "mentor"
+        mentor.mkdir()
+        pm.MENTOR_DIR = mentor
+        pm.SIGNALS_FILE = mentor / "signals.jsonl"
+        pm.SIGNALS_FILE.write_text('{"signal_id":"s1"}\n')
+
+        # Create 3 backups
+        for _ in range(3):
+            pm.cmd_backup(max_backups=2)
+            import time; time.sleep(0.01)
+
+        backups = list(Path(td).glob("mentor-backup-*"))
+        assert len(backups) <= 2, f"Expected <= 2 backups, got {len(backups)}"
+    print("  test_backup_retention: PASS")
+
+
 def main():
     test_generate_l0_default()
     test_generate_l0_custom()
@@ -109,6 +228,11 @@ def main():
     test_l1_insufficient_data()
     test_l1_token_budget()
     test_l1_calibration_warning()
+    test_export_import_roundtrip()
+    test_import_dedup()
+    test_import_version_rejection()
+    test_backup_integrity()
+    test_backup_retention()
     print("\nAll palace memory tests passed.")
 
 

@@ -186,6 +186,179 @@ def cmd_status():
     return 0
 
 
+EXPORT_FORMAT = "cmux_mentor_export"
+EXPORT_VERSION = 1
+NUDGE_AUDIT_FILE = MENTOR_DIR / "nudge-audit.jsonl"
+
+
+def _read_jsonl(path):
+    """Read JSONL file, return list of dicts."""
+    if not path.exists():
+        return []
+    items = []
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    items.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    return items
+
+
+def cmd_export(output_file):
+    """Export mentor data to a single JSON file."""
+    signals = _read_signals()
+    nudge_audit = _read_jsonl(NUDGE_AUDIT_FILE)
+
+    l0_text = L0_FILE.read_text(encoding="utf-8") if L0_FILE.exists() else ""
+    l1_text = L1_FILE.read_text(encoding="utf-8") if L1_FILE.exists() else ""
+
+    export_data = {
+        "format": EXPORT_FORMAT,
+        "version": EXPORT_VERSION,
+        "exported_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "signals": signals,
+        "nudge_audit": nudge_audit,
+        "l0": l0_text,
+        "l1": l1_text,
+    }
+
+    output = Path(output_file)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with open(output, "w", encoding="utf-8") as f:
+        json.dump(export_data, f, indent=2, ensure_ascii=False)
+
+    print(f"Exported: {len(signals)} signals, {len(nudge_audit)} nudge events → {output}")
+    print("Note: JSONL 텍스트 기반 — embedding 재생성 불필요.")
+    return 0
+
+
+def cmd_import(input_file, skip_existing=True):
+    """Import mentor data from a JSON export file."""
+    try:
+        with open(input_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+    # Format validation
+    if data.get("format") != EXPORT_FORMAT:
+        print(f"Error: unknown format '{data.get('format')}'. Expected: {EXPORT_FORMAT}")
+        return 1
+
+    if data.get("version", 0) > EXPORT_VERSION:
+        print(f"Error: export version {data.get('version')} > supported ({EXPORT_VERSION})")
+        return 1
+
+    _ensure_dirs()
+    imported = 0
+    skipped = 0
+
+    # Import signals with dedup by signal_id
+    import_signals = data.get("signals", [])
+    if import_signals:
+        existing_ids = set()
+        if skip_existing:
+            for s in _read_signals():
+                sid = s.get("signal_id", "")
+                if sid:
+                    existing_ids.add(sid)
+
+        import fcntl
+        with open(SIGNALS_FILE, "a") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                for s in import_signals:
+                    sid = s.get("signal_id", "")
+                    if skip_existing and sid in existing_ids:
+                        skipped += 1
+                        continue
+                    f.write(json.dumps(s, ensure_ascii=False) + "\n")
+                    existing_ids.add(sid)
+                    imported += 1
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+
+    # Import nudge audit (append, no dedup — audit log is append-only)
+    nudge_events = data.get("nudge_audit", [])
+    nudge_imported = 0
+    if nudge_events:
+        import fcntl
+        with open(NUDGE_AUDIT_FILE, "a") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                for e in nudge_events:
+                    f.write(json.dumps(e, ensure_ascii=False) + "\n")
+                    nudge_imported += 1
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+
+    # Restore L0/L1 if not present
+    l0_data = data.get("l0", "")
+    l1_data = data.get("l1", "")
+    if l0_data and not L0_FILE.exists():
+        L0_FILE.write_text(l0_data, encoding="utf-8")
+    if l1_data and not L1_FILE.exists():
+        L1_FILE.write_text(l1_data, encoding="utf-8")
+
+    print(f"Imported: {imported} signals ({skipped} skipped), {nudge_imported} nudge events")
+    return 0
+
+
+def cmd_backup(max_backups=5):
+    """Create a timestamped backup of the mentor directory."""
+    import shutil
+    from datetime import datetime, timezone
+
+    if not MENTOR_DIR.exists():
+        print("No mentor directory to backup.")
+        return 0
+
+    parent = MENTOR_DIR.parent
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    backup_dir = parent / f"mentor-backup-{timestamp}"
+
+    try:
+        shutil.copytree(MENTOR_DIR, backup_dir)
+    except Exception as e:
+        print(f"Backup error: {e}")
+        return 1
+
+    # Integrity validation — check all JSONL lines parse
+    validation_errors = []
+    for jsonl_file in backup_dir.rglob("*.jsonl"):
+        try:
+            with open(jsonl_file) as f:
+                for i, line in enumerate(f, 1):
+                    line = line.strip()
+                    if line:
+                        json.loads(line)
+        except json.JSONDecodeError as e:
+            validation_errors.append(f"{jsonl_file.name}:{i}: {e}")
+
+    if validation_errors:
+        print(f"Warning: {len(validation_errors)} integrity issues:")
+        for err in validation_errors[:5]:
+            print(f"  - {err}")
+    else:
+        print(f"Backup OK: {backup_dir}")
+
+    # Retention: prune old backups
+    if max_backups > 0:
+        all_backups = sorted(parent.glob("mentor-backup-*"))
+        while len(all_backups) > max_backups:
+            oldest = all_backups.pop(0)
+            shutil.rmtree(oldest)
+            print(f"  Pruned: {oldest.name}")
+
+    size = sum(f.stat().st_size for f in backup_dir.rglob("*") if f.is_file())
+    print(f"  Size: {size:,} bytes, backups retained: {min(max_backups, len(list(parent.glob('mentor-backup-*'))))}")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="JARVIS Palace Memory Context Generator")
     sub = parser.add_subparsers(dest="cmd")
@@ -193,12 +366,28 @@ def main():
     sub.add_parser("generate-context", help="Generate L0 + L1 context files")
     sub.add_parser("status", help="Show mentor storage status")
 
+    p_export = sub.add_parser("export", help="Export mentor data to JSON")
+    p_export.add_argument("--output", required=True, help="Output JSON file path")
+
+    p_import = sub.add_parser("import", help="Import mentor data from JSON")
+    p_import.add_argument("--input", required=True, help="Input JSON file path")
+    p_import.add_argument("--no-skip-existing", action="store_true", help="Don't skip existing signals")
+
+    p_backup = sub.add_parser("backup", help="Create timestamped backup")
+    p_backup.add_argument("--max-backups", type=int, default=5, help="Max backups to retain")
+
     args = parser.parse_args()
 
     if args.cmd == "generate-context":
         return cmd_generate_context()
     elif args.cmd == "status":
         return cmd_status()
+    elif args.cmd == "export":
+        return cmd_export(args.output)
+    elif args.cmd == "import":
+        return cmd_import(args.input, skip_existing=not args.no_skip_existing)
+    elif args.cmd == "backup":
+        return cmd_backup(args.max_backups)
     else:
         parser.print_help()
         return 0
