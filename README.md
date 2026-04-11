@@ -563,7 +563,7 @@ cmux-orchestrator-watcher-pack/           216 files
 |   |-- 05-research/          (3)          Repo survey, Claude source findings
 |   |-- 99-archive/           (14)         Deprecated docs preserved
 |   +-- CHANGELOG.md                       Full version history
-+-- tests/                    (9)          62 unit tests (ChromaDB-based)
++-- tests/                    (9)          72 unit tests (ChromaDB-based)
 ```
 
 ---

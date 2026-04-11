@@ -25,6 +25,14 @@ if platform.machine() == "arm64" and platform.system() == "Darwin":
     os.environ.setdefault("ORT_DISABLE_COREML", "1")
 
 import chromadb
+from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
+
+from mentor_redactor import redact as _redact_text
+
+
+def _cpu_embedding():
+    """CoreML segfault 방지를 위해 CPU-only embedding function 반환."""
+    return ONNXMiniLM_L6_V2(preferred_providers=["CPUExecutionProvider"])
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
@@ -40,11 +48,12 @@ def _get_collection():
         os.chmod(PALACE_PATH, 0o700)
     except (OSError, NotImplementedError):
         pass
+    ef = _cpu_embedding()
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
-        return client.get_collection(COLLECTION_NAME)
+        return client.get_collection(COLLECTION_NAME, embedding_function=ef)
     except Exception:
-        return client.create_collection(COLLECTION_NAME)
+        return client.create_collection(COLLECTION_NAME, embedding_function=ef)
 
 
 def utc_now():
@@ -58,7 +67,8 @@ def utc_str(dt=None):
 def _store_nudge_audit(event):
     """Store nudge audit event as a drawer in palace."""
     col = _get_collection()
-    doc = f"NUDGE {event['level']} → {event['target_surface_id']}: {event['evidence_span']}"
+    safe_evidence = _redact_text(event['evidence_span'])
+    doc = f"NUDGE {event['level']} → {event['target_surface_id']}: {safe_evidence}"
     meta = {
         "wing": "cmux_nudge",
         "room": event["reason_code"].lower(),
@@ -131,20 +141,30 @@ def _validate_issuer_authority(issuer, target):
 
     issuer_ws = issuer_info.get("workspace")
 
-    # target surface의 workspace 찾기
+    # target surface의 role과 workspace 찾기
+    target_role = None
     target_ws = None
     for role_name, info in roles.items():
         if info.get("surface") == target:
+            target_role = role_name
             target_ws = info.get("workspace")
             break
 
     if not target_ws:
         return None  # target이 roles에 없으면 검증 스킵
 
-    # 권한 매트릭스 적용
-    if issuer == "team_lead" and issuer_ws and target_ws:
-        if issuer_ws != target_ws:
+    # 권한 매트릭스 적용 (nudge-escalation.md)
+    if issuer == "team_lead":
+        if issuer_ws and target_ws and issuer_ws != target_ws:
             return f"team_lead in {issuer_ws} cannot nudge target in {target_ws} (cross-workspace)"
+
+    if issuer == "boss" and target_role:
+        if target_role not in ("team_lead",):
+            return f"boss can only nudge team_lead, not {target_role}"
+
+    if issuer == "jarvis" and target_role:
+        if target_role != "boss":
+            return f"jarvis can only nudge boss, not {target_role}"
 
     return None  # 통과
 

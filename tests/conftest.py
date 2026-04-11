@@ -10,8 +10,8 @@ import logging
 import os
 
 # ONNX Runtime CoreML provider segfault 방지 (Apple Silicon)
-# 프로덕션 코드는 각 모듈에서 setdefault하지만, 테스트가 직접 chromadb를
-# import하는 경로에서는 우회됨. conftest는 모든 테스트 모듈보다 먼저 로드됨.
+# 프로덕션 코드는 각 모듈에서 _cpu_embedding()으로 preferred_providers=["CPUExecutionProvider"]를
+# 명시하지만, 테스트가 직접 chromadb를 import하는 경로를 위해 환경변수도 설정.
 os.environ["ORT_DISABLE_COREML"] = "1"
 
 # ChromaDB posthog telemetry 비활성화

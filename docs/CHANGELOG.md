@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-04-12 (External Review — 7 Issues Root Cause Fix)
+
+**외부 전문가 리뷰 No-Go 7건 근본 해결 — 72/72 tests passed**
+
+**ORT CPU-only 강제: monkey-patch → ChromaDB 공식 preferred_providers API (Issue #1-2)**
+- 모든 JARVIS 모듈 `_get_collection()`에 `ONNXMiniLM_L6_V2(preferred_providers=["CPUExecutionProvider"])` 적용
+- `cmux-main-context.sh` hook 인라인 Python에도 동일 적용
+- `tests/conftest.py` monkey-patch 제거, 환경변수만 유지
+- 대상: `jarvis_palace_memory.py`, `jarvis_mentor_signal.py`, `jarvis_nudge.py`, `jarvis_failure_classifier.py`, `jarvis_mentor_report.py`
+
+**문서 SSOT 수정 (Issue #3)**
+- `palace-memory.md` L1 소스: signals.jsonl → ChromaDB `wing=cmux_mentor` 쿼리
+- 저장소 표 mentor signals SSOT: `signals.jsonl` → `~/.cmux-jarvis-palace (ChromaDB)`
+- Export 포맷: version 1 + signals/l0/l1 → version 2 + drawers 기반
+
+**README 수치 정정 (Issue #4)**
+- "62 unit tests" → "72 unit tests"
+
+**Context injection 테스트 ChromaDB 기반 재작성 (Issue #5)**
+- `test_context_injection.py` 시뮬레이터를 파일 기반(L0.md/L1.md/signals.jsonl) → ChromaDB 기반으로 전면 교체
+- 실제 hook(`cmux-main-context.sh`)과 동일한 palace → identity.txt + wing=cmux_mentor 쿼리 경로 검증
+
+**Nudge 권한 매트릭스 강제 (Issue #6)**
+- `_validate_issuer_authority()`에 boss→team_lead만, jarvis→boss만 허용 규칙 추가
+- 기존: team_lead cross-workspace만 검사 → 문서 매트릭스 3규칙 모두 구현
+
+**Nudge evidence redaction (Issue #7)**
+- `_store_nudge_audit()`에서 `mentor_redactor.redact()` 적용 후 ChromaDB 저장
+
 ## 2026-04-12 (Red-Team Findings Root Cause Fix)
 
 **7건 레드팀 Findings + 3건 잔여 리스크 — 전수 근본 원인 해결**

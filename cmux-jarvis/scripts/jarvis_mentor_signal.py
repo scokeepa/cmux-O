@@ -26,8 +26,14 @@ if platform.machine() == "arm64" and platform.system() == "Darwin":
     os.environ.setdefault("ORT_DISABLE_COREML", "1")
 
 import chromadb
+from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2
 
 from mentor_redactor import sanitize_name, sanitize_content
+
+
+def _cpu_embedding():
+    """CoreML segfault 방지를 위해 CPU-only embedding function 반환."""
+    return ONNXMiniLM_L6_V2(preferred_providers=["CPUExecutionProvider"])
 
 PALACE_PATH = os.path.expanduser("~/.cmux-jarvis-palace")
 COLLECTION_NAME = "cmux_mentor_signals"
@@ -57,11 +63,12 @@ def _get_collection():
         os.chmod(PALACE_PATH, 0o700)
     except (OSError, NotImplementedError):
         pass
+    ef = _cpu_embedding()
     client = chromadb.PersistentClient(path=PALACE_PATH)
     try:
-        return client.get_collection(COLLECTION_NAME)
+        return client.get_collection(COLLECTION_NAME, embedding_function=ef)
     except Exception:
-        return client.create_collection(COLLECTION_NAME)
+        return client.create_collection(COLLECTION_NAME, embedding_function=ef)
 
 
 def utc_now():

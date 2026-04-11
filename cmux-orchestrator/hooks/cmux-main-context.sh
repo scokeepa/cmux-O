@@ -94,9 +94,11 @@ try:
         if _pf.machine() == 'arm64' and _pf.system() == 'Darwin':
             os.environ.setdefault('ORT_DISABLE_COREML', '1')
         import chromadb as _cdb
+        from chromadb.utils.embedding_functions import ONNXMiniLM_L6_V2 as _EF
+        _ef = _EF(preferred_providers=['CPUExecutionProvider'])
         _client = _cdb.PersistentClient(path=palace_path)
         try:
-            _col = _client.get_collection('cmux_mentor_signals')
+            _col = _client.get_collection('cmux_mentor_signals', embedding_function=_ef)
         except Exception:
             _col = None
 
