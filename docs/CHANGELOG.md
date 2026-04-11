@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-04-11 (Integration Audit Fix)
+
+**원본 레포 재검토 — 통합 오류 8건 수정**
+- **telemetry**: `ANONYMIZED_TELEMETRY=False` 제거 → `logging.getLogger("chromadb.telemetry.product.posthog").setLevel(CRITICAL)` (mempalace `__init__.py:14` 동일 패턴)
+- **ONNX CoreML**: arm64 Darwin에서 `ORT_DISABLE_COREML=1` 설정 (segfault 방지, mempalace `__init__.py:18-19`)
+- **palace chmod**: 디렉터리 `0o700` 권한 설정 (mempalace `palace.py:41`)
+- **input sanitize**: `sanitize_name()`/`sanitize_content()` 추가 — path traversal, null byte, 128자 제한 (mempalace `config.py:22-57`)
+- **L4 gate**: `verification > 0.15 AND correction > 0.05` (correction 누락 수정)
+- **L5 gate**: `(tool_diversity > 8 OR orchestration) AND strategic > 0.05` (왜곡 수정)
+- **L6/L7 gate**: 추가 (team/orch_count/external contribution)
+- **install.sh**: `ANONYMIZED_TELEMETRY` 환경변수 제거
+
+**README 최신화**
+- 배지: 216 files, 62 tests, 22 arch docs, ChromaDB 배지
+- Security: chmod 0o700, sanitize, ONNX CoreML guard 추가 (11항목)
+- docs 구조: 00~99 번호 체계 반영, installer 7단계
+
+**문서 체계 정리**
+- `docs/features/` 구현 완료 문서 → `docs/99-archive/` 이동
+
 ## 2026-04-11 (mempalace ChromaDB Migration)
 
 **JSONL → ChromaDB 전면 전환**
