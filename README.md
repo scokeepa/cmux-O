@@ -15,10 +15,11 @@
 <p align="center">
   <img src="https://img.shields.io/badge/skills-9-blue?style=flat-square" alt="9 Skills">
   <img src="https://img.shields.io/badge/hooks-31-orange?style=flat-square" alt="31 Hooks">
-  <img src="https://img.shields.io/badge/files-204-green?style=flat-square" alt="204 Files">
-  <img src="https://img.shields.io/badge/tests-58%20passed-brightgreen?style=flat-square" alt="58 Tests">
+  <img src="https://img.shields.io/badge/files-216-green?style=flat-square" alt="216 Files">
+  <img src="https://img.shields.io/badge/tests-62%20passed-brightgreen?style=flat-square" alt="62 Tests">
   <img src="https://img.shields.io/badge/mentor%20scripts-6-blueviolet?style=flat-square" alt="6 Mentor Scripts">
-  <img src="https://img.shields.io/badge/arch%20docs-11-informational?style=flat-square" alt="11 Architecture Docs">
+  <img src="https://img.shields.io/badge/arch%20docs-22-informational?style=flat-square" alt="22 Architecture Docs">
+  <img src="https://img.shields.io/badge/memory-ChromaDB-ff6b6b?style=flat-square" alt="ChromaDB">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20WSL-lightgrey?style=flat-square" alt="Platform">
   <img src="https://img.shields.io/badge/license-MIT-yellow?style=flat-square" alt="MIT License">
 </p>
@@ -342,7 +343,10 @@ Runs on macOS, Linux, and WSL. OS-specific commands are abstracted through `cmux
 | LOCK 3-conditions | LOCK + phase=applying + evidence | Forged evolution attempts |
 | Control tower guard | shlex token analysis for `close-workspace` only | Main/Watcher termination |
 | Role filtering | `cmux identify` + roles.json | Cross-session interference |
-| Mode gate | All 30 hooks dormant before `/cmux-start` | Non-orchestration interference |
+| Mode gate | All 31 hooks dormant before `/cmux-start` | Non-orchestration interference |
+| Palace chmod 0o700 | Owner-only directory permissions | Unauthorized palace access |
+| Input sanitize | `sanitize_name()` blocks path traversal, null bytes | Metadata injection |
+| ONNX CoreML guard | `ORT_DISABLE_COREML=1` on Apple Silicon | arm64 vector query segfault |
 
 ---
 
@@ -378,13 +382,13 @@ Measures AI collaboration effectiveness across 6 independent axes (adapted from 
   User Instruction
        |
        v
-  Signal Engine ──> signals.jsonl (6-axis scores + antipatterns)
+  Signal Engine ──> ChromaDB palace (6-axis scores + antipatterns)
        |
        +──> L0/L1 Context (600-900 tokens) ──> /cmux prompt injection
        |
        +──> Coaching Hint (max 1/round, spam-protected)
        |
-       +──> Weekly Report (TIMELINE.md longitudinal tracking)
+       +──> Weekly Report (palace longitudinal tracking)
        |
        v
   Failure Classifier
@@ -415,7 +419,7 @@ When workers stall, the system can send role-appropriate nudges:
 | Boss | JARVIS (User approval) | L1 | Evidence bundle + recommendation |
 | Watcher | - | - | Evidence producer only, cannot execute nudges |
 
-Cooldown: 5 min per target. All nudges logged to `nudge-audit.jsonl`.
+Cooldown: 5 min per target. All nudges logged to ChromaDB `cmux_nudge` wing.
 
 ---
 
@@ -445,15 +449,15 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 ```
   test_cmux_utils        ████████████████  9 tests   Core utilities
   test_hooks             ██████████        5 tests   Hook enforcement
-  test_mentor_signal     ██████████        5 tests   6-axis signal engine
-  test_palace_memory     ████████████      6 tests   L0/L1 context generation
-  test_redaction         ████████████████  8 tests   Privacy redaction
+  test_mentor_signal     ████████████      6 tests   6-axis signal (ChromaDB)
+  test_palace_memory     ██████████████████ 9 tests  Palace memory (ChromaDB)
+  test_redaction         ████████████████  8 tests   Privacy redaction + sanitize
   test_context_injection ██████████        5 tests   Prompt injection logic
   test_nudge             ██████████████    7 tests   Nudge L1 + cooldown
   test_mentor_report     ████████████      6 tests   Report generation
   test_failure_class.    ██████████████    7 tests   Failure classification
   ─────────────────────────────────────────────────
-  Total                                   58 tests  ALL PASSED
+  Total                                   62 tests  ALL PASSED
 ```
 
 ### Codebase Scale
@@ -462,10 +466,10 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 |-----------|-------|-------|---------|
 | cmux-orchestrator | 82 | ~8K | Boss orchestration, hooks, dispatch |
 | cmux-watcher | 12 | ~3K | 4-layer monitoring engine |
-| cmux-jarvis | 35 | ~5K | Evolution + Mentor + Memory |
-| Mentor scripts (new) | 6 | 1,193 | Signal, Memory, Redactor, Nudge, Report, Classifier |
-| Architecture docs | 11 | ~1,200 | JARVIS architecture SSOT |
-| Tests | 9 | ~800 | 58 unit tests |
+| cmux-jarvis | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
+| Mentor scripts | 6 | ~1,300 | Signal, Memory, Redactor, Nudge, Report, Classifier |
+| Architecture docs | 22 | ~2,000 | System + JARVIS + operations + dev |
+| Tests | 9 | ~900 | 62 unit tests (ChromaDB-based) |
 
 ---
 
@@ -490,10 +494,11 @@ bash install.sh
 The installer automatically:
 1. Detects OS (macOS / Linux / WSL)
 2. Validates cmux and python3 versions
-3. Backs up existing settings.json and skills
-4. Copies 9 skills to `~/.claude/skills/`
-5. Creates 30 hook symlinks + registers in settings.json
-6. Auto-detects installed AI CLIs
+3. Installs chromadb (Mentor Lane memory engine)
+4. Backs up existing settings.json and skills
+5. Copies 9 skills to `~/.claude/skills/`
+6. Creates 31 hook symlinks + registers in settings.json
+7. Auto-detects installed AI CLIs
 
 ### Uninstall
 
@@ -507,7 +512,7 @@ The installer automatically:
 ## Project Structure
 
 ```
-cmux-orchestrator-watcher-pack/           183 files
+cmux-orchestrator-watcher-pack/           216 files
 |
 |-- install.sh                             One-command installer
 |-- README.md
@@ -545,10 +550,16 @@ cmux-orchestrator-watcher-pack/           183 files
 |-- cmux-pause/                            /cmux-pause
 |-- cmux-uninstall/                        /cmux-uninstall
 |
-|-- docs/                                  Design documents
-|   |-- jarvis/               (40)         JARVIS architecture + mentor docs + research
-|   +-- issues/               (1)          Known issues
-+-- tests/                    (9)          58 unit tests (hooks + mentor + nudge)
+|-- docs/                                  Design documents (SSOT/SRP structured)
+|   |-- 00-overview.md                     Project docs navigation hub
+|   |-- 01-architecture/      (9)          System, orchestrator, watcher, hooks, security
+|   |-- 02-jarvis/            (12)         JARVIS evolution + mentor lane
+|   |-- 03-operations/        (4)          Quick start, AI profiles, troubleshooting
+|   |-- 04-development/       (4)          Phase roadmap, tests, directory structure
+|   |-- 05-research/          (3)          Repo survey, Claude source findings
+|   |-- 99-archive/           (14)         Deprecated docs preserved
+|   +-- CHANGELOG.md                       Full version history
++-- tests/                    (9)          62 unit tests (ChromaDB-based)
 ```
 
 ---
