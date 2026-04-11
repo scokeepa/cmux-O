@@ -1,6 +1,7 @@
 {
   "created_at": "2026-03-18T16:55:00Z",
-  "updated_at": "2026-04-09T12:59:18Z",
+  "updated_at": "2026-04-11T14:30:00Z",
+  "_note": "workspaces/surfaces는 런타임에 cmux tree --all로 동적 구성. presets만 정본.",
   "presets": {
     "codex": {
       "start": "codex",
@@ -45,291 +46,27 @@
       "difficulty": "high"
     }
   },
-  "workspaces": {
-    "ws1": {
-      "name": "MiniMax WS1",
-      "ai": "MiniMax",
-      "model": "MiniMax-M2.5",
-      "surfaces": [
-        "3",
-        "4",
-        "5",
-        "6"
-      ]
-    },
-    "ws2": {
-      "name": "MiniMax WS2",
-      "ai": "MiniMax",
-      "model": "MiniMax-M2.5",
-      "surfaces": [
-        "7",
-        "8",
-        "9",
-        "10"
-      ]
-    },
-    "ws3": {
-      "name": "Codex WS",
-      "ai": "Codex",
-      "model": "gpt-5.4",
-      "surfaces": [
-        "11",
-        "15",
-        "16",
-        "20"
-      ]
-    },
-    "ws4": {
-      "name": "GLM WS",
-      "ai": "GLM",
-      "model": "glm-4.7",
-      "surfaces": [
-        "12",
-        "17",
-        "18",
-        "19"
-      ]
-    }
-  },
+  "workspaces": {},
   "surfaces": {
     "1": {
       "ai": "Claude Code",
+      "role": "main",
       "start_cmd": "claude",
       "quit_cmd": "/exit",
       "reset_cmd": "/clear",
       "model": "claude-opus",
       "difficulty": "high",
-      "capabilities": [
-        "orchestration"
-      ],
-      "workspace": null
+      "capabilities": ["orchestration"]
     },
     "2": {
       "ai": "Watcher",
+      "role": "watcher",
       "start_cmd": "claude",
       "quit_cmd": "/exit",
       "reset_cmd": "/clear",
       "model": "claude-opus",
       "difficulty": "high",
-      "capabilities": [
-        "monitoring",
-        "watcher"
-      ],
-      "workspace": null
-    },
-    "3": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws1",
-      "role": "worker"
-    },
-    "4": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws1"
-    },
-    "5": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws1"
-    },
-    "6": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws1"
-    },
-    "7": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws2"
-    },
-    "8": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws2",
-      "role": "worker"
-    },
-    "9": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws2"
-    },
-    "10": {
-      "ai": "MiniMax",
-      "start_cmd": "ccm",
-      "quit_cmd": "/exit",
-      "reset_cmd": "/clear",
-      "model": "MiniMax-M2.5",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "analysis"
-      ],
-      "workspace": "ws2"
-    },
-    "11": {
-      "ai": "Codex",
-      "start_cmd": "codex",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "gpt-5.4",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws3"
-    },
-    "12": {
-      "ai": "GLM",
-      "start_cmd": "ccg2",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "glm-4.7",
-      "difficulty": "low",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws4"
-    },
-    "15": {
-      "ai": "Codex",
-      "start_cmd": "codex",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "gpt-5.4",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws3"
-    },
-    "16": {
-      "ai": "Codex",
-      "start_cmd": "codex",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "gpt-5.4",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws3"
-    },
-    "17": {
-      "ai": "GLM",
-      "start_cmd": "ccg2",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "glm-4.7",
-      "difficulty": "low",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws4"
-    },
-    "18": {
-      "ai": "GLM",
-      "start_cmd": "ccg2",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "glm-4.7",
-      "difficulty": "low",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws4"
-    },
-    "19": {
-      "ai": "GLM",
-      "start_cmd": "ccg2",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "glm-4.7",
-      "difficulty": "low",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws4"
-    },
-    "20": {
-      "ai": "Codex",
-      "start_cmd": "codex",
-      "quit_cmd": "/quit",
-      "reset_cmd": "/new",
-      "model": "gpt-5.4",
-      "difficulty": "high",
-      "capabilities": [
-        "coding",
-        "implementation"
-      ],
-      "workspace": "ws3"
-    },
-    "72": {
-      "ai": "Codex",
-      "role": "worker"
+      "capabilities": ["monitoring", "watcher"]
     }
   },
   "main_surface": "1",

@@ -190,9 +190,7 @@ for sid, info in sorted(surfaces.items(), key=sort_key):
     # Filter: only dispatch to surfaces defined in orchestra-config
     if valid_surfaces and str(sid) not in valid_surfaces:
         continue
-    # Filter: only dispatch if ANE OCR data is recent (vision-monitor check)
-    if ! check_vision_monitor_ane_idle "$sid" 2>/dev/null; then
-        continue
+    # ANE vision monitor check는 watcher-scan.py가 수행 (Python heredoc에서 제거)
     ai_name = str(info.get("ai", "")).strip().lower()
     difficulty = difficulty_for_ai(ai_name)
     if not difficulty:

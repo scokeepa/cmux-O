@@ -248,10 +248,12 @@ def build_departments(surfaces: dict, main_surface: str, watcher_surface: str) -
         dept = departments[ws]
         ai = info.get("ai", "unknown")
         status = info.get("status", "IDLE")
-        if dept["team_lead"] is None:
-            dept["team_lead"] = {"surface": sid, "ai": ai, "status": status}
+        role = info.get("role", "")
+        entry = {"surface": sid, "ai": ai, "status": status}
+        if role == "team_lead" or (dept["team_lead"] is None and role != "member"):
+            dept["team_lead"] = entry
         else:
-            dept["members"].append({"surface": sid, "ai": ai, "status": status})
+            dept["members"].append(entry)
         # 부서 상태: 하나라도 WORKING이면 WORKING, 전부 DONE이면 DONE
         if status == "WORKING":
             dept["status"] = "WORKING"

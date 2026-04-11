@@ -156,7 +156,7 @@ Step 3: 컨텍스트 초기화 + cmux send 디스패치 (MANDATORY)
 팀장은 작업 분석 후 자체 판단으로 팀원을 생성한다. Main에 요청하지 않고 직접 pane을 분할한다.
 
 ### 원칙
-- **부서(surface) = 팀장 + 팀원 pane들** — 하나의 surface 안에서 팀 구성
+- **부서(workspace) = 팀장(lead surface) + 팀원 pane들** — 하나의 workspace(사이드탭) 안에서 팀 구성
 - **팀장이 자율적으로** 팀원 수와 모델을 결정
 - **난이도별 모델 선택** — 토큰 비용 최적화 필수
 
@@ -212,7 +212,7 @@ cmux close-surface --surface surface:N
 ### Main의 역할 (변경)
 
 Main은 **팀장만 관리**한다:
-- 부서(surface)에 팀장 배치 + 작업 지시
+- 부서(workspace)에 팀장 배치 + 작업 지시
 - 팀장에게 다음 문구 포함: "팀원이 필요하면 cmux new-split으로 직접 생성해. 난이도별로 --model opus/sonnet/haiku 선택해서 토큰 낭비를 줄여."
 - 팀장의 최종 DONE 보고만 수집
 
@@ -554,7 +554,7 @@ cmux pipe-pane --surface surface:1 --command "grep -m1 DONE: > /tmp/surface1_don
 
 ### 동적 팀원 추가/제거 (팀장이 직접 수행)
 
-> 팀장이 부서(surface) 내에서 자율적으로 팀원 pane을 생성/제거한다.
+> 팀장이 부서(workspace) 내에서 자율적으로 팀원 pane을 생성/제거한다.
 > 난이도별 모델을 지정하여 토큰 비용을 최적화한다.
 
 ```bash

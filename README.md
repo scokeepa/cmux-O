@@ -439,6 +439,8 @@ cmux-orchestrator-watcher-pack/           183 files
 - **`has_success` validation** -- At least one passing verification required (no all-failure reports)
 - **Watcher guard reorder** -- Complete no-op when orchestration disabled (role marker included)
 - **Standalone installer sync** -- HOOK_MAP aligned with activation-hook.sh
+- **Runtime model alignment** -- Config stale surfaces removed (presets only), watcher role-based team_lead detection, idle-auto-dispatch Python syntax fix
+- **Test fixes** -- 14/14 passing (silent exit stderr optional, malformed JSON target corrected)
 
 ### 2026-04-09
 
