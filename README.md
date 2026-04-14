@@ -1,28 +1,27 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/cmux-orchestrator-4f46e5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBhdGggZD0iTTggMTJoOE0xMiA4djgiLz48L3N2Zz4=">
-    <img alt="cmux orchestrator" src="https://img.shields.io/badge/cmux-orchestrator-4f46e5?style=for-the-badge">
-  </picture>
+  <img src="cmux-O-logo.svg" alt="cmux-O logo" width="260">
 </p>
 
-<h1 align="center">cmux orchestrator + watcher pack</h1>
+<h1 align="center">cmux-O</h1>
+<p align="center"><strong>cmux Orchestration JARVIS Watcher Pack</strong></p>
+<p align="center"><strong>Language:</strong> English | <a href="README.ko.md">한국어</a></p>
 
 <p align="center">
-  <strong>AI Multi-Agent Orchestration Platform for Claude Code</strong><br>
+  <strong>cmux-O AI Orchestration Core for Claude Code</strong><br>
   One command. Multiple AIs. Parallel execution. Self-healing.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/skills-9-blue?style=flat-square" alt="9 Skills">
-  <img src="https://img.shields.io/badge/hooks-31-orange?style=flat-square" alt="31 Hooks">
-  <img src="https://img.shields.io/badge/restore-SQL%20extract-ff6b6b?style=flat-square" alt="SQL Extract Restore">
-  <img src="https://img.shields.io/badge/files-216-green?style=flat-square" alt="216 Files">
-  <img src="https://img.shields.io/badge/tests-86-informational?style=flat-square" alt="86 Tests">
-  <img src="https://img.shields.io/badge/mentor%20scripts-6-blueviolet?style=flat-square" alt="6 Mentor Scripts">
-  <img src="https://img.shields.io/badge/arch%20docs-22-informational?style=flat-square" alt="22 Architecture Docs">
-  <img src="https://img.shields.io/badge/memory-ChromaDB-ff6b6b?style=flat-square" alt="ChromaDB">
-  <img src="https://img.shields.io/badge/platform-macOS(cmux)%20%7C%20Windows(cmuxw)%20%7C%20Linux%20%7C%20WSL-lightgrey?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/license-MIT-yellow?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/badge/cmux--O%20skills-9-blue?style=flat-square" alt="cmux-O skills 9">
+  <img src="https://img.shields.io/badge/cmux--O%20hooks-31-orange?style=flat-square" alt="cmux-O hooks 31">
+  <img src="https://img.shields.io/badge/cmux--O%20restore-SQL%20extract-ff6b6b?style=flat-square" alt="cmux-O restore SQL extract">
+  <img src="https://img.shields.io/badge/cmux--O%20files-216-green?style=flat-square" alt="cmux-O files 216">
+  <img src="https://img.shields.io/badge/cmux--O%20tests-86-informational?style=flat-square" alt="cmux-O tests 86">
+  <img src="https://img.shields.io/badge/cmux--O%20mentor%20scripts-6-blueviolet?style=flat-square" alt="cmux-O mentor scripts 6">
+  <img src="https://img.shields.io/badge/cmux--O%20arch%20docs-22-informational?style=flat-square" alt="cmux-O architecture docs 22">
+  <img src="https://img.shields.io/badge/cmux--O%20memory-ChromaDB-ff6b6b?style=flat-square" alt="cmux-O memory ChromaDB">
+  <img src="https://img.shields.io/badge/cmux--O%20platform-macOS(cmux)%20%7C%20Windows(cmuxw)%20%7C%20Linux%20%7C%20WSL-lightgrey?style=flat-square" alt="cmux-O platform">
+  <img src="https://img.shields.io/badge/cmux--O%20license-MIT-yellow?style=flat-square" alt="cmux-O license MIT">
 </p>
 
 ---
@@ -475,9 +474,9 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 
 | Component | Files | Lines | Purpose |
 |-----------|-------|-------|---------|
-| cmux-orchestrator | 82 | ~8K | Boss orchestration, hooks, dispatch |
-| cmux-watcher | 12 | ~3K | 4-layer monitoring engine |
-| cmux-jarvis | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
+| cmux-O Orchestrator Core | 82 | ~8K | Boss orchestration, hooks, dispatch |
+| cmux-O Watcher Engine | 12 | ~3K | 4-layer monitoring engine |
+| cmux-O JARVIS Core | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
 | Mentor scripts | 6 | ~1,300 | Signal, Memory, Redactor, Nudge, Report, Classifier |
 | Architecture docs | 22 | ~2,000 | System + JARVIS + operations + dev |
 | Tests | 11 | ~1,350 | 83 unit tests (ChromaDB-based) |
@@ -523,12 +522,12 @@ The installer automatically:
 ## Project Structure
 
 ```
-cmux-orchestrator-watcher-pack/           216 files
+cmux-O/                                  216 files
 |
 |-- install.sh                             One-command installer
 |-- README.md
 |
-|-- cmux-orchestrator/                     Boss -- orchestration core
+|-- cmux-orchestrator/                     cmux-O Boss Core (orchestration)
 |   |-- SKILL.md                           Orchestration directives
 |   |-- activation-hook.sh                 Auto-registration on skill load
 |   |-- hooks/                (22)         Workflow enforcement hooks
@@ -538,14 +537,14 @@ cmux-orchestrator-watcher-pack/           216 files
 |   |-- commands/             (2)          Command definitions
 |   +-- config/               (2)          ai-profile.json, orchestra-config.json
 |
-|-- cmux-watcher/                          Watcher -- real-time monitoring
+|-- cmux-watcher/                          cmux-O Watcher Engine (real-time monitoring)
 |   |-- SKILL.md
 |   |-- hooks/                (2)
 |   |-- scripts/              (4)          watcher-scan.py (55KB, unified scanner)
 |   |-- commands/             (2)          cmux-watcher-mute
 |   +-- references/           (4)          Monitoring protocols
 |
-|-- cmux-jarvis/                           JARVIS -- evolution + mentor intelligence
+|-- cmux-jarvis/                           cmux-O JARVIS Core (evolution + mentor intelligence)
 |   |-- SKILL.md
 |   |-- hooks/                (6)          GATE, FileChanged, Compact
 |   |-- scripts/              (21)         Evolution, verify, mentor signal/memory/
