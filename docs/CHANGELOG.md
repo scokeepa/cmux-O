@@ -10,6 +10,7 @@
 - 회귀 테스트 확장: `tests/test_watcher_scan.py` 4 → 7 (`bash` 없는 fallback, heartbeat direct fallback, literal subprocess cmux 재유입 차단).
 - 문서 동기화: `README.md`, `docs/03-operations/cross-platform.md`, `docs/04-development/test-guide.md`.
 - README Cross-Platform 섹션에 공식 바이너리 소스 명시: macOS [`manaflow-ai/cmux`](https://github.com/manaflow-ai/cmux), Windows [`scokeepa/cmuxw`](https://github.com/scokeepa/cmuxw).
+- 브랜딩 리뉴얼: 프로젝트 명칭을 `cmux-O`로 표기하고 README 상단에 신규 SVG 로고(`assets/cmux-o-mark.svg`) + 슬로건(`cmux Orchestration JARVIS Watcher Pack`) 반영.
 
 ## 2026-04-13 (Control Tower Guard false positive hardening)
 

@@ -1,11 +1,9 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/cmux-orchestrator-4f46e5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIi8+PHBhdGggZD0iTTggMTJoOE0xMiA4djgiLz48L3N2Zz4=">
-    <img alt="cmux orchestrator" src="https://img.shields.io/badge/cmux-orchestrator-4f46e5?style=for-the-badge">
-  </picture>
+  <img src="assets/cmux-o-mark.svg" alt="cmux-O logo" width="260">
 </p>
 
-<h1 align="center">cmux orchestrator + watcher pack</h1>
+<h1 align="center">cmux-O</h1>
+<p align="center"><strong>cmux Orchestration JARVIS Watcher Pack</strong></p>
 
 <p align="center">
   <strong>AI Multi-Agent Orchestration Platform for Claude Code</strong><br>
@@ -523,7 +521,7 @@ The installer automatically:
 ## Project Structure
 
 ```
-cmux-orchestrator-watcher-pack/           216 files
+cmux-O/                                  216 files
 |
 |-- install.sh                             One-command installer
 |-- README.md
