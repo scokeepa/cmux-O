@@ -1,25 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480" role="img" aria-labelledby="title desc">
-  <title id="title">cmuxO symbol</title>
-  <desc id="desc">Minimal O ring with a subtle golden eye inside.</desc>
+  <title id="title">cmuxO seal symbol</title>
+  <desc id="desc">Circular seal with ORCHESTRATOR JARVIS WATCHER text, O monogram, and 2026.</desc>
   <defs>
-    <linearGradient id="oRing" x1="10%" y1="0%" x2="90%" y2="100%">
-      <stop offset="0%" stop-color="#a9e5ff"/>
-      <stop offset="48%" stop-color="#75b8ff"/>
-      <stop offset="100%" stop-color="#475ce0"/>
+    <radialGradient id="paper" cx="50%" cy="45%" r="62%">
+      <stop offset="0%" stop-color="#e7d7aa"/>
+      <stop offset="70%" stop-color="#d3bd85"/>
+      <stop offset="100%" stop-color="#b59a63"/>
+    </radialGradient>
+    <linearGradient id="ink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#221b10"/>
+      <stop offset="100%" stop-color="#090704"/>
     </linearGradient>
-    <linearGradient id="eyeStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#f7c94b"/>
-      <stop offset="55%" stop-color="#ffd976"/>
-      <stop offset="100%" stop-color="#e9ab2a"/>
-    </linearGradient>
+    <path id="topArc" d="M 56 240 A 184 184 0 0 1 424 240"/>
   </defs>
 
-  <!-- O only: no external motif/background -->
-  <circle cx="240" cy="240" r="156" fill="none" stroke="url(#oRing)" stroke-width="26"/>
+  <!-- Base medallion -->
+  <circle cx="240" cy="240" r="200" fill="url(#paper)" stroke="#1b140c" stroke-width="5"/>
+  <circle cx="240" cy="240" r="174" fill="none" stroke="#2b2215" stroke-width="3"/>
+  <circle cx="240" cy="240" r="132" fill="none" stroke="#2b2215" stroke-width="2.6"/>
 
-  <!-- Minimal eye inside O -->
-  <ellipse cx="240" cy="240" rx="74" ry="34" fill="none" stroke="url(#eyeStroke)" stroke-width="7"/>
-  <circle cx="240" cy="240" r="22" fill="#f5c64b"/>
-  <circle cx="240" cy="240" r="11" fill="#0b0f17"/>
-  <circle cx="246" cy="234" r="2.6" fill="#fff3c8" opacity="0.95"/>
+  <!-- Center monogram -->
+  <text x="240" y="284" text-anchor="middle" fill="#1a130a" font-family="Times New Roman, Georgia, serif" font-size="138" font-weight="700">O</text>
+
+  <!-- Ring text -->
+  <text fill="#1a130a" font-family="Times New Roman, Georgia, serif" font-size="16" font-weight="700" letter-spacing="0.8">
+    <textPath href="#topArc" startOffset="50%" text-anchor="middle">ORCHESTRATOR JARVIS WATCHER</textPath>
+  </text>
 </svg>
