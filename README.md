@@ -4,6 +4,7 @@
 
 <h1 align="center">cmux-O</h1>
 <p align="center"><strong>cmux Orchestration JARVIS Watcher Pack</strong></p>
+<p align="center"><strong>Language:</strong> English | <a href="README.ko.md">한국어</a></p>
 
 <p align="center">
   <strong>cmux-O AI Orchestration Core for Claude Code</strong><br>

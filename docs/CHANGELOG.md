@@ -13,6 +13,7 @@
 - 브랜딩 리뉴얼: 프로젝트 명칭을 `cmux-O`로 표기하고 README 상단에 신규 SVG 로고(`assets/cmux-o-mark.svg`) + 슬로건(`cmux Orchestration JARVIS Watcher Pack`) 반영.
 - README 본문 브랜드 톤 정렬: 컴포넌트 표기와 구조 설명을 `cmux-O` 네이밍(`cmux-O Orchestrator Core`, `cmux-O Watcher Engine`, `cmux-O JARVIS Core`)으로 통일.
 - 루트 최상단 로고 파일 `cmux-O-logo.svg` 추가 후 README 최상단에서 해당 파일을 직접 참조하도록 변경.
+- README 다국어 진입점 추가: 영어 `README.md`와 한국어 `README.ko.md`를 상단 링크로 상호 이동 가능하도록 구성.
 
 ## 2026-04-13 (Control Tower Guard false positive hardening)
 
