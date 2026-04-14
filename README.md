@@ -473,9 +473,9 @@ With monitoring:    ========== 18 min  (1 min overhead for 4-layer scan)
 
 | Component | Files | Lines | Purpose |
 |-----------|-------|-------|---------|
-| cmux-orchestrator | 82 | ~8K | Boss orchestration, hooks, dispatch |
-| cmux-watcher | 12 | ~3K | 4-layer monitoring engine |
-| cmux-jarvis | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
+| cmux-O Orchestrator Core | 82 | ~8K | Boss orchestration, hooks, dispatch |
+| cmux-O Watcher Engine | 12 | ~3K | 4-layer monitoring engine |
+| cmux-O JARVIS Core | 35 | ~6K | Evolution + Mentor + ChromaDB Memory |
 | Mentor scripts | 6 | ~1,300 | Signal, Memory, Redactor, Nudge, Report, Classifier |
 | Architecture docs | 22 | ~2,000 | System + JARVIS + operations + dev |
 | Tests | 11 | ~1,350 | 83 unit tests (ChromaDB-based) |
@@ -526,7 +526,7 @@ cmux-O/                                  216 files
 |-- install.sh                             One-command installer
 |-- README.md
 |
-|-- cmux-orchestrator/                     Boss -- orchestration core
+|-- cmux-orchestrator/                     cmux-O Boss Core (orchestration)
 |   |-- SKILL.md                           Orchestration directives
 |   |-- activation-hook.sh                 Auto-registration on skill load
 |   |-- hooks/                (22)         Workflow enforcement hooks
@@ -536,14 +536,14 @@ cmux-O/                                  216 files
 |   |-- commands/             (2)          Command definitions
 |   +-- config/               (2)          ai-profile.json, orchestra-config.json
 |
-|-- cmux-watcher/                          Watcher -- real-time monitoring
+|-- cmux-watcher/                          cmux-O Watcher Engine (real-time monitoring)
 |   |-- SKILL.md
 |   |-- hooks/                (2)
 |   |-- scripts/              (4)          watcher-scan.py (55KB, unified scanner)
 |   |-- commands/             (2)          cmux-watcher-mute
 |   +-- references/           (4)          Monitoring protocols
 |
-|-- cmux-jarvis/                           JARVIS -- evolution + mentor intelligence
+|-- cmux-jarvis/                           cmux-O JARVIS Core (evolution + mentor intelligence)
 |   |-- SKILL.md
 |   |-- hooks/                (6)          GATE, FileChanged, Compact
 |   |-- scripts/              (21)         Evolution, verify, mentor signal/memory/
