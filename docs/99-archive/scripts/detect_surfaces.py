@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# ARCHIVED 2026-04-15 — no active consumers in repo.
+# Boss surface detection is implemented in cmux_utils.is_boss_surface()
+# (cmux-orchestrator/scripts/cmux_utils.py:119).
+# Preserved for historical reference of opus_main / is_main detection logic.
 """cmux surface 자동 감지 — cmux tree --all 출력을 파싱하여 각 AI의 surface 번호를 매핑.
 
 Usage:
