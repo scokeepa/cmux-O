@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-04-15 (leceipts artifact gate + detect_surfaces archive + Boss role minimal)
+
+**외부 리뷰 Conditional Go 4 Phase 중 3/4 Phase + Phase 1/2 축소판 실행. (PR #6)**
+
+**Phase 4 — leceipts artifact gate (vendored)**
+- `scripts/leceipts/check-reports.ts` — upstream `0oooooooo0/leceipts` (MIT) 1:1 vendor. 5-section 보고서 린터 (Root cause / Change / Recurrence prevention / Verification / Remaining risk).
+- `scripts/leceipts/{LICENSE,README.md}` — MIT 사본 + 출처/핀(md5 64a4f9bdbc1b0092558fc4bcb3c6ac21, upstream mtime 2026-04-11 16:22) + 업그레이드 가이드 + 책임 경계.
+- 루트 `verification-kit.config.json` — reportsDir=plans, reportPattern=`-verification-report\.md$`.
+- 루트 `package.json` — `"private": true`, tsx/@types/node devDependency, `leceipts:check{,:all,:file}` npm scripts.
+- `.gitignore` — `node_modules/`, `package-lock.json` 추가.
+- `plans/verification-report-template.md` — upstream template 1:1.
+- `docs/04-development/test-guide.md` — "Verification Report Gate (leceipts)" 섹션 추가. runtime checker(`cmux-orchestrator/scripts/leceipts-checker.py`)와 artifact checker 책임 경계 명시.
+
+**Phase 3 — detect_surfaces.py archive**
+- `cmux-orchestrator/scripts/detect_surfaces.py` → `docs/99-archive/scripts/detect_surfaces.py` (git mv + archive header comment).
+- 근거: 활성 소비자 0건. `is_boss_surface()`가 `cmux-orchestrator/scripts/cmux_utils.py:119`에 이미 SSOT로 존재.
+
+**Phase 2 — Boss role SSOT 축소 정렬**
+- `docs/00-overview.md:23` — "Boss/Main: 디스패치, 수집, 커밋" → "Boss: 디스패치, 수집, 커밋".
+- `cmux-orchestrator/hooks/cmux-stop-guard.sh:4` — "메인에 /cmux 엔터" → "Boss에 /cmux 엔터".
+- 브로더 Phase 1/2 (`cmux-watcher/SKILL.md`, `eagle-patterns.md`, `subagent-definitions.md`, `worker-protocol.md`, `worktree-workflow.md`, `cmux-no-stall-enforcer.py`)는 병렬 세션의 runtime dir SSOT 마이그레이션에 위임.
+
+**검증**
+- `npm install` → 7 packages, 0 vulnerabilities.
+- `npm run leceipts:check:all` → 6/6 pass.
+- `python3 -m pytest tests -q` → 80 passed, 6 failed (baseline regression 0; 실패 6건 전부 pre-existing `test_watcher_scan.py`, 본 PR 무관).
+- `bash -n cmux-stop-guard.sh`, `py_compile detect_surfaces.py` OK.
+
 ## 2026-04-14 (Watcher Windows-native fallback hardening)
 
 - `watcher-scan.py`에 `read_surface_text()`를 추가해 `bash read-surface.sh` 실패 시 `cmux capture-pane/read-screen` native fallback으로 surface 텍스트를 읽도록 보강.
